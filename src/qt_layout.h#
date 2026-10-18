@@ -1,0 +1,146 @@
+mod qt_ffi
+mod qt_types
+
+pub fn new_vbox() -> qt_types::Layout is
+    return qt_types::Layout { handle: qth_vbox_new() }
+end
+
+pub fn new_hbox() -> qt_types::Layout is
+    return qt_types::Layout { handle: qth_hbox_new() }
+end
+
+pub fn new_grid() -> qt_types::Layout is
+    return qt_types::Layout { handle: qth_grid_new() }
+end
+
+;; Two-column "label : field" form.
+pub fn new_form() -> qt_types::Layout is
+    return qt_types::Layout { handle: qth_form_new() }
+end
+
+pub fn layout_add_widget(layout: qt_types::Layout, widget: qt_types::Widget) is
+    qth_layout_add_widget(layout.handle, widget.handle)
+end
+
+;; Nests `child` inside `layout` (box, grid or form).
+pub fn layout_add_layout(layout: qt_types::Layout, child: qt_types::Layout) is
+    qth_layout_add_layout(layout.handle, child.handle)
+end
+
+;; Box layouts only.
+pub fn layout_add_spacing(layout: qt_types::Layout, px: i32) is
+    qth_layout_add_spacing(layout.handle, px)
+end
+
+;; Box layouts only.
+pub fn layout_add_stretch(layout: qt_types::Layout, stretch: i32) is
+    qth_layout_add_stretch(layout.handle, stretch)
+end
+
+pub fn layout_set_margins(layout: qt_types::Layout, l: i32, t: i32, r: i32, b: i32) is
+    qth_layout_set_margins(layout.handle, l, t, r, b)
+end
+
+pub fn layout_set_spacing(layout: qt_types::Layout, px: i32) is
+    qth_layout_set_spacing(layout.handle, px)
+end
+
+;; Grid layouts only. `row_span` / `col_span` of 1 = a single cell.
+pub fn grid_add_widget(layout: qt_types::Layout, widget: qt_types::Widget, row: i32, col: i32, row_span: i32, col_span: i32) is
+    qth_grid_add_widget(layout.handle, widget.handle, row, col, row_span, col_span)
+end
+
+;; Form layouts only.
+pub fn form_add_row(layout: qt_types::Layout, label: string, widget: qt_types::Widget) is
+    qth_form_add_row(layout.handle, label, widget.handle)
+end
+
+;; A widget takes one layout; a second call is ignored.
+pub fn widget_set_layout(widget: qt_types::Widget, layout: qt_types::Layout) is
+    qth_widget_set_layout(widget.handle, layout.handle)
+end
+
+;; ── Layout builders ──────────────────────────────────────────────────────
+;; One call instead of new_vbox + N × layout_add_widget (+ set_layout):
+;;
+;;   let form: qt_types::Widget = qt_layout::panel_column([title, name_edit, ok_button])
+;;   let bar:  qt_types::Layout = qt_layout::row([back, next])
+;;
+;; `[a, b, c]` is an ordinary H# array of widgets.
+
+;; Widgets side by side.
+pub fn row(items: [qt_types::Widget]) -> qt_types::Layout is
+    let layout: qt_types::Layout = qt_types::Layout { handle: qth_hbox_new() }
+    let mut i: int = 0
+    while i < array_len(items) is
+        let w: qt_types::Widget = items[i]
+        qth_layout_add_widget(layout.handle, w.handle)
+        i += 1
+    end
+    return layout
+end
+
+;; Widgets one under another.
+pub fn column(items: [qt_types::Widget]) -> qt_types::Layout is
+    let layout: qt_types::Layout = qt_types::Layout { handle: qth_vbox_new() }
+    let mut i: int = 0
+    while i < array_len(items) is
+        let w: qt_types::Widget = items[i]
+        qth_layout_add_widget(layout.handle, w.handle)
+        i += 1
+    end
+    return layout
+end
+
+;; Widgets filled into a grid, `columns` per row, left to right, top to bottom.
+pub fn grid_of(items: [qt_types::Widget], columns: i32) -> qt_types::Layout is
+    let layout: qt_types::Layout = qt_types::Layout { handle: qth_grid_new() }
+    let cols: i32 = if columns < 1 then 1 else columns
+    let mut i: int = 0
+    while i < array_len(items) is
+        let w: qt_types::Widget = items[i]
+        let r: i32 = (i / cols)
+        let c: i32 = (i - r * cols)
+        qth_grid_add_widget(layout.handle, w.handle, r, c, 1, 1)
+        i += 1
+    end
+    return layout
+end
+
+;; A form from two parallel arrays of labels and widgets.
+pub fn form_of(labels: [string], items: [qt_types::Widget]) -> qt_types::Layout is
+    let layout: qt_types::Layout = qt_types::Layout { handle: qth_form_new() }
+    let mut i: int = 0
+    while i < array_len(items) is
+        let w: qt_types::Widget = items[i]
+        let label: string = if i < array_len(labels) then labels[i] else ""
+        qth_form_add_row(layout.handle, label, w.handle)
+        i += 1
+    end
+    return layout
+end
+
+;; A caption next to a widget: `labeled("Imię", name_edit)`.
+pub fn labeled(caption: string, widget: qt_types::Widget) -> qt_types::Layout is
+    let layout: qt_types::Layout = qt_types::Layout { handle: qth_hbox_new() }
+    let label: int = qth_label_new(caption)
+    qth_layout_add_widget(layout.handle, label)
+    qth_layout_add_widget(layout.handle, widget.handle)
+    return layout
+end
+
+;; Container widget that already has the layout applied — ready for
+;; `window_set_central_widget`, `tabs_add_tab`, `splitter_add_widget` …
+pub fn panel(layout: qt_types::Layout) -> qt_types::Widget is
+    let w: qt_types::Widget = qt_types::Widget { handle: qth_widget_new() }
+    qth_widget_set_layout(w.handle, layout.handle)
+    return w
+end
+
+pub fn panel_row(items: [qt_types::Widget]) -> qt_types::Widget is
+    return panel(row(items))
+end
+
+pub fn panel_column(items: [qt_types::Widget]) -> qt_types::Widget is
+    return panel(column(items))
+end
