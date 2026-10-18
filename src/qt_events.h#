@@ -1,0 +1,30 @@
+mod qt_ffi
+mod qt_types
+
+;; Next queued event, or `nil` when there is none. At most 4096 events are
+;; kept; if a program stops polling, the oldest are dropped.
+pub fn poll_event() -> qt_types::Event? is
+    let kind_raw: i32 = qth_poll_event()
+    if kind_raw == 0 is
+        return nil
+    end
+    return qt_types::Event {
+        kind:   qt_types::event_kind_from_i32(kind_raw),
+        widget: qt_types::Widget { handle: qth_event_handle() },
+        value:  qth_event_value(),
+        text:   qt_ffi::take(qth_event_text()),
+        pos_x:  qth_event_x(),
+        pos_y:  qth_event_y(),
+        mods:   qth_event_mods(),
+    }
+end
+
+;; Events waiting right now.
+pub fn pending() -> i32 is
+    return qth_event_pending()
+end
+
+;; Throws every queued event away.
+pub fn clear() is
+    qth_event_clear()
+end
