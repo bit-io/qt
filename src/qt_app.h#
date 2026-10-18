@@ -1,0 +1,97 @@
+mod qt_ffi
+mod qt_types
+
+;; Creates the QApplication (once). Repeated calls are harmless. Call this
+;; first in `main()`.
+pub fn init() is
+    qth_app_init()
+end
+
+;; Same, but pins the Qt platform plugin — e.g. "offscreen" for tests and CI
+;; (no display needed). An already set QT_QPA_PLATFORM wins.
+pub fn init_platform(platform: string) is
+    qth_app_init_platform(platform)
+end
+
+;; Convenience for tests: `init_platform("offscreen")`.
+pub fn init_offscreen() is
+    qth_app_init_platform("offscreen")
+end
+
+;; Blocking Qt event loop (`QApplication::exec()`); returns the exit code.
+;; Use it when everything is driven by Qt itself (menus, timers via the
+;; event queue are not delivered to H# while `run()` blocks — for those use
+;; the polling loop with `process_events()` + `qt_events::poll_event()`).
+pub fn run() -> int is
+    return qth_app_exec()
+end
+
+;; Ends `run()` / makes `is_running()` false.
+pub fn quit() is
+    qth_app_quit()
+end
+
+;; Destroys the QApplication and every window. Optional — call it last if you
+;; want a clean teardown; without it Qt is simply left to the OS at exit.
+pub fn shutdown() is
+    qth_app_shutdown()
+end
+
+;; Handles pending Qt events without blocking and frees objects you
+;; `destroy()`ed. Call once per iteration of your own main loop.
+pub fn process_events() is
+    qth_app_process_events()
+end
+
+pub fn is_running() -> bool is
+    return qth_app_is_running() != 0
+end
+
+pub fn set_style(style_name: string) is
+    qth_app_set_style(style_name)
+end
+
+pub fn set_app_name(name: string) is
+    qth_app_set_app_name(name)
+end
+
+;; Qt style sheet applied to the whole application.
+pub fn set_style_sheet(css: string) is
+    qth_app_set_style_sheet(css)
+end
+
+pub fn set_quit_on_last_window_closed(on: bool) is
+    qth_app_set_quit_on_last_window_closed(if on then 1 else 0)
+end
+
+;; ── Info & diagnostics ───────────────────────────────────────────────────
+
+;; Version of qt-hsharp's native part, e.g. "0.2.0".
+pub fn version() -> string is
+    return qt_ffi::take(qth_version())
+end
+
+;; Version of the Qt the native part was linked against, e.g. "6.4.2".
+pub fn qt_version() -> string is
+    return qt_ffi::take(qth_qt_version())
+end
+
+;; Is this handle still alive? (false after the widget was deleted.)
+pub fn is_alive(widget: qt_types::Widget) -> bool is
+    return qth_handle_is_valid(widget.handle) != 0
+end
+
+;; Number of live objects registered with the library (leak hunting).
+pub fn live_objects() -> int is
+    return qth_handle_count()
+end
+
+;; ── Clipboard ────────────────────────────────────────────────────────────
+
+pub fn clipboard_set(text: string) is
+    qth_clipboard_set_text(text)
+end
+
+pub fn clipboard_get() -> string is
+    return qt_ffi::take(qth_clipboard_get_text())
+end
