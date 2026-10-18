@@ -1,0 +1,107 @@
+mod qt_ffi
+mod qt_types
+
+pub fn new_table(rows: i32, cols: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_table_new(rows, cols) }
+end
+
+pub fn table_set_size(table: qt_types::Widget, rows: i32, cols: i32) is
+    qth_table_set_size(table.handle, rows, cols)
+end
+
+pub fn table_rows(table: qt_types::Widget) -> i32 is
+    return qth_table_rows(table.handle)
+end
+
+pub fn table_cols(table: qt_types::Widget) -> i32 is
+    return qth_table_cols(table.handle)
+end
+
+;; Out-of-range cells are ignored (and read as "").
+pub fn table_set_cell(table: qt_types::Widget, row: i32, col: i32, text: string) is
+    qth_table_set_cell(table.handle, row, col, text)
+end
+
+pub fn table_get_cell(table: qt_types::Widget, row: i32, col: i32) -> string is
+    return qt_ffi::take(qth_table_get_cell(table.handle, row, col))
+end
+
+pub fn table_set_col_header(table: qt_types::Widget, col: i32, text: string) is
+    qth_table_set_col_header(table.handle, col, text)
+end
+
+pub fn table_set_row_header(table: qt_types::Widget, row: i32, text: string) is
+    qth_table_set_row_header(table.handle, row, text)
+end
+
+;; Appends an empty row, returns its index.
+pub fn table_add_row(table: qt_types::Widget) -> i32 is
+    return qth_table_add_row(table.handle)
+end
+
+pub fn table_insert_row(table: qt_types::Widget, at: i32) is
+    qth_table_insert_row(table.handle, at)
+end
+
+pub fn table_remove_row(table: qt_types::Widget, row: i32) is
+    qth_table_remove_row(table.handle, row)
+end
+
+;; Empties every cell; size and headers stay.
+pub fn table_clear(table: qt_types::Widget) is
+    qth_table_clear(table.handle)
+end
+
+;; -1 when there is no current cell.
+pub fn table_current_row(table: qt_types::Widget) -> i32 is
+    return qth_table_current_row(table.handle)
+end
+
+pub fn table_current_col(table: qt_types::Widget) -> i32 is
+    return qth_table_current_col(table.handle)
+end
+
+pub fn table_set_current(table: qt_types::Widget, row: i32, col: i32) is
+    qth_table_set_current(table.handle, row, col)
+end
+
+;; Click on a column header sorts by it. Text sorts alphabetically, so pad
+;; numbers ("007") if you need numeric order.
+pub fn table_set_sorting(table: qt_types::Widget, enabled: bool) is
+    qth_table_set_sorting(table.handle, if enabled then 1 else 0)
+end
+
+pub fn table_sort_by(table: qt_types::Widget, col: i32, descending: bool) is
+    qth_table_sort_by(table.handle, col, if descending then 1 else 0)
+end
+
+pub fn table_set_editable(table: qt_types::Widget, editable: bool) is
+    qth_table_set_editable(table.handle, if editable then 1 else 0)
+end
+
+;; true: clicking selects the whole row.
+pub fn table_set_select_rows(table: qt_types::Widget, whole_rows: bool) is
+    qth_table_set_select_rows(table.handle, if whole_rows then 1 else 0)
+end
+
+pub fn table_set_alternating_colors(table: qt_types::Widget, on: bool) is
+    qth_table_set_alternating_colors(table.handle, if on then 1 else 0)
+end
+
+pub fn table_set_col_width(table: qt_types::Widget, col: i32, px: i32) is
+    qth_table_set_col_width(table.handle, col, px)
+end
+
+;; Columns share the table's width equally.
+pub fn table_stretch_columns(table: qt_types::Widget, stretch: bool) is
+    qth_table_stretch_columns(table.handle, if stretch then 1 else 0)
+end
+
+;; Colours are 0xRRGGBB (see qt_gfx::rgb).
+pub fn table_set_cell_background(table: qt_types::Widget, row: i32, col: i32, color: i32) is
+    qth_table_set_cell_background(table.handle, row, col, color)
+end
+
+pub fn table_set_cell_foreground(table: qt_types::Widget, row: i32, col: i32, color: i32) is
+    qth_table_set_cell_foreground(table.handle, row, col, color)
+end
