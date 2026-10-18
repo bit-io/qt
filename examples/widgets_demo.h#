@@ -1,0 +1,116 @@
+use "bit -> qt"
+
+fn main() is
+    qt_app::init()
+
+    let window: qt_types::Widget = qt_window::new_window("qt-hsharp 0.2 — demo", 520, 420)
+
+    ;; Menu bar: Plik → Wyczyść log / Zakończ
+    let file_menu: qt_types::Menu   = qt_window::window_add_menu(window, "Plik")
+    let act_clear: qt_types::Action = qt_window::menu_add_action(file_menu, "Wyczyść log", "Ctrl+L")
+    qt_window::menu_add_separator(file_menu)
+    let act_quit:  qt_types::Action = qt_window::menu_add_action(file_menu, "Zakończ", "Ctrl+Q")
+
+    ;; Tabs
+    let tabs: qt_types::Widget = qt_widgets::new_tabs()
+
+    ;; Tab 1 — form
+    let page1:  qt_types::Widget = qt_widgets::new_container()
+    let form:   qt_types::Layout = qt_layout::new_form()
+    let name:   qt_types::Widget = qt_inputs::new_lineedit("Imię")
+    let age:    qt_types::Widget = qt_inputs::new_spinbox(0, 120, 30)
+    qt_inputs::spinbox_set_suffix(age, " lat")
+    let color:  qt_types::Widget = qt_inputs::new_combobox()
+    qt_inputs::combobox_add_item(color, "Czerwony")
+    qt_inputs::combobox_add_item(color, "Zielony")
+    qt_inputs::combobox_add_item(color, "Niebieski")
+    let greet:  qt_types::Widget = qt_widgets::new_button("Przywitaj")
+    qt_layout::form_add_row(form, "Imię", name)
+    qt_layout::form_add_row(form, "Wiek", age)
+    qt_layout::form_add_row(form, "Kolor", color)
+    qt_layout::form_add_row(form, "", greet)
+    qt_layout::widget_set_layout(page1, form)
+    qt_widgets::tabs_add_tab(tabs, page1, "Formularz")
+
+    ;; Tab 2 — list + progress + timer
+    let page2:    qt_types::Widget = qt_widgets::new_container()
+    let grid:     qt_types::Layout = qt_layout::new_grid()
+    let list:     qt_types::Widget = qt_inputs::new_list()
+    qt_inputs::list_add_item(list, "Jabłko")
+    qt_inputs::list_add_item(list, "Gruszka")
+    qt_inputs::list_add_item(list, "Śliwka")
+    let progress: qt_types::Widget = qt_widgets::new_progress(0, 100, 0)
+    let start:    qt_types::Widget = qt_widgets::new_button("Start / Stop")
+    qt_layout::grid_add_widget(grid, list, 0, 0, 1, 2)
+    qt_layout::grid_add_widget(grid, progress, 1, 0, 1, 1)
+    qt_layout::grid_add_widget(grid, start, 1, 1, 1, 1)
+    qt_layout::widget_set_layout(page2, grid)
+    qt_widgets::tabs_add_tab(tabs, page2, "Lista")
+
+    ;; Log under the tabs
+    let log: qt_types::Widget = qt_inputs::new_textedit("")
+    qt_inputs::textedit_set_read_only(log, true)
+
+    let central: qt_types::Widget = qt_widgets::new_container()
+    let root:    qt_types::Layout = qt_layout::new_vbox()
+    qt_layout::layout_add_widget(root, tabs)
+    qt_layout::layout_add_widget(root, log)
+    qt_layout::widget_set_layout(central, root)
+    qt_window::window_set_central_widget(window, central)
+    qt_window::window_set_status(window, "Gotowe", 0)
+
+    let ticker: qt_types::Timer = qt_timer::new_timer(100, false)
+
+    qt_widgets::show(window)
+
+    let mut keep_going: bool = true
+    while keep_going is
+        qt_app::process_events()
+
+        let ev = qt_events::poll_event()
+        if ev != nil is
+            if ev.kind == qt_types::EventKind::Clicked is
+                if ev.widget.handle == greet.handle is
+                    let who: string = qt_inputs::lineedit_get_text(name)
+                    qt_inputs::textedit_append(log, "Cześć, " + who + "! (" + qt_inputs::combobox_get_text(color) + ")")
+                end
+                if ev.widget.handle == start.handle is
+                    if qt_timer::is_active(ticker) is
+                        qt_timer::stop(ticker)
+                    else
+                        qt_timer::start(ticker)
+                    end
+                end
+            end
+            if ev.kind == qt_types::EventKind::TimerTick is
+                let next: i32 = qt_widgets::progress_get_value(progress) + 2
+                if next > 100 is
+                    qt_widgets::progress_set_value(progress, 0)
+                else
+                    qt_widgets::progress_set_value(progress, next)
+                end
+            end
+            if ev.kind == qt_types::EventKind::ItemActivated is
+                qt_inputs::textedit_append(log, "Wybrano: " + ev.text)
+            end
+            if ev.kind == qt_types::EventKind::ValueChanged is
+                qt_window::window_set_status(window, "Wiek: " + to_string(ev.value), 2000)
+            end
+            if ev.kind == qt_types::EventKind::ActionTriggered is
+                if ev.widget.handle == act_clear.handle is
+                    qt_inputs::textedit_clear(log)
+                end
+                if ev.widget.handle == act_quit.handle is
+                    keep_going = false
+                end
+            end
+            if ev.kind == qt_types::EventKind::WindowClosed is
+                keep_going = false
+            end
+        end
+
+        keep_going = keep_going && qt_app::is_running()
+    end
+    qt_timer::destroy(ticker)
+    qt_app::shutdown()
+end
