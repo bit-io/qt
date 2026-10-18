@@ -1,0 +1,24 @@
+mod qt_ffi
+mod qt_types
+
+pub const WATCH_KEYS:   i32 = 1
+pub const WATCH_MOUSE:  i32 = 2     ;; button press / release
+pub const WATCH_MOVE:   i32 = 4     ;; mouse move (turns on mouse tracking)
+pub const WATCH_WHEEL:  i32 = 8
+pub const WATCH_RESIZE: i32 = 16
+pub const WATCH_ALL:    i32 = 31
+
+;; `mask` is a sum of the WATCH_* values; 0 stops watching.
+pub fn watch(widget: qt_types::Widget, mask: i32) is
+    qth_widget_watch_input(widget.handle, mask)
+end
+
+pub fn unwatch(widget: qt_types::Widget) is
+    qth_widget_watch_input(widget.handle, 0)
+end
+
+;; Key sequence like "Ctrl+S" or "F5" that works while `widget`'s window is
+;; active. Triggering queues `ShortcutActivated` with this shortcut's handle.
+pub fn new_shortcut(widget: qt_types::Widget, sequence: string) -> qt_types::Shortcut is
+    return qt_types::Shortcut { handle: qth_shortcut_new(widget.handle, sequence) }
+end
