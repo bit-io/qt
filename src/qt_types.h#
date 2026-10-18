@@ -1,0 +1,126 @@
+pub struct Widget is
+    pub handle: int
+end
+
+;; QVBoxLayout / QHBoxLayout / QGridLayout / QFormLayout.
+pub struct Layout is
+    pub handle: int
+end
+
+;; A QMenu (menu-bar menu or submenu).
+pub struct Menu is
+    pub handle: int
+end
+
+;; A QAction (menu entry or toolbar button). Emits `ActionTriggered`.
+pub struct Action is
+    pub handle: int
+end
+
+;; A QTimer. Emits `TimerTick` on every timeout.
+pub struct Timer is
+    pub handle: int
+end
+
+;; A QShortcut created with `qt_input::new_shortcut`. Emits `ShortcutActivated`.
+pub struct Shortcut is
+    pub handle: int
+end
+
+;; A QSystemTrayIcon. Emits `TrayActivated`.
+pub struct Tray is
+    pub handle: int
+end
+
+;; An item of a tree widget (ids are only meaningful together with their tree;
+;; id 0 is the invisible root / "no item").
+pub struct TreeItem is
+    pub id: int
+end
+
+pub enum EventKind is
+    Clicked
+    TextChanged
+    ReturnPressed
+    Toggled
+    WindowClosed
+    ValueChanged
+    IndexChanged
+    TabChanged
+    SelectionChanged
+    ItemActivated
+    ActionTriggered
+    TimerTick
+    KeyPressed
+    KeyReleased
+    MousePressed
+    MouseReleased
+    MouseMoved
+    Wheel
+    Resized
+    ShortcutActivated
+    TableCellChanged
+    TableCellEdited
+    TableCellActivated
+    TreeSelectionChanged
+    TreeItemActivated
+    DateChanged
+    TimeChanged
+    TrayActivated
+    Unknown
+end
+
+;; One queued Qt signal.
+;;   handle  the object that produced it — compare with `widget.handle`,
+;;           `action.handle` or `timer.handle` of the objects you created
+;;   value   slider / spin box value, 0|1 for toggles, row or tab index,
+;;           key code (KeyPressed), mouse button 1/2/3 (MousePressed),
+;;           wheel delta (Wheel), yyyymmdd (DateChanged), tree item id …
+;;   text    line-edit / text-edit text, combo or list item text, typed key,
+;;           double spin box number, ISO date, HH:mm:ss …
+;;   pos_x   mouse x, table row, new width (Resized)
+;;   pos_y   mouse y, table column, new height (Resized)
+;;   mods    keyboard modifiers: 1 shift, 2 ctrl, 4 alt, 8 meta
+pub struct Event is
+    pub kind:   EventKind
+    pub widget: Widget
+    pub value:  i32
+    pub text:   string
+    pub pos_x:  i32
+    pub pos_y:  i32
+    pub mods:   i32
+end
+
+pub fn event_kind_from_i32(k: i32) -> EventKind is
+    match k is
+        1  => is return EventKind::Clicked end
+        2  => is return EventKind::TextChanged end
+        3  => is return EventKind::ReturnPressed end
+        4  => is return EventKind::Toggled end
+        5  => is return EventKind::WindowClosed end
+        6  => is return EventKind::ValueChanged end
+        7  => is return EventKind::IndexChanged end
+        8  => is return EventKind::TabChanged end
+        9  => is return EventKind::SelectionChanged end
+        10 => is return EventKind::ItemActivated end
+        11 => is return EventKind::ActionTriggered end
+        12 => is return EventKind::TimerTick end
+        13 => is return EventKind::KeyPressed end
+        14 => is return EventKind::KeyReleased end
+        15 => is return EventKind::MousePressed end
+        16 => is return EventKind::MouseReleased end
+        17 => is return EventKind::MouseMoved end
+        18 => is return EventKind::Wheel end
+        19 => is return EventKind::Resized end
+        20 => is return EventKind::ShortcutActivated end
+        21 => is return EventKind::TableCellChanged end
+        22 => is return EventKind::TableCellEdited end
+        23 => is return EventKind::TableCellActivated end
+        24 => is return EventKind::TreeSelectionChanged end
+        25 => is return EventKind::TreeItemActivated end
+        26 => is return EventKind::DateChanged end
+        27 => is return EventKind::TimeChanged end
+        28 => is return EventKind::TrayActivated end
+        _  => is return EventKind::Unknown end
+    end
+end
