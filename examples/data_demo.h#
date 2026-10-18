@@ -1,0 +1,100 @@
+use "bit -> qt"
+
+fn main() is
+    qt_app::init()
+    let window: qt_types::Widget = qt_window::new_window("Dane", 760, 460)
+
+    ;; Left: file-tree-like navigator
+    let tree: qt_types::Widget = qt_tree::new_tree(1)
+    qt_tree::tree_set_header(tree, 0, "Projekty")
+    let proj_a: qt_types::TreeItem = qt_tree::tree_add_item(tree, qt_tree::root(), "Alfa")
+    let proj_b: qt_types::TreeItem = qt_tree::tree_add_item(tree, qt_tree::root(), "Beta")
+    qt_tree::tree_add_item(tree, proj_a, "Zadania")
+    qt_tree::tree_add_item(tree, proj_a, "Notatki")
+    qt_tree::tree_add_item(tree, proj_b, "Budżet")
+    qt_tree::tree_expand_all(tree)
+
+    ;; Right: stacked pages
+    let stack: qt_types::Widget = qt_extras::new_stack()
+
+    let table: qt_types::Widget = qt_table::new_table(0, 3)
+    qt_table::table_set_col_header(table, 0, "Zadanie")
+    qt_table::table_set_col_header(table, 1, "Termin")
+    qt_table::table_set_col_header(table, 2, "Status")
+    qt_table::table_stretch_columns(table, true)
+    qt_table::table_set_select_rows(table, true)
+    qt_table::table_set_sorting(table, true)
+    let r0: i32 = qt_table::table_add_row(table)
+    qt_table::table_set_cell(table, r0, 0, "Napisać raport")
+    qt_table::table_set_cell(table, r0, 1, "2026-11-01")
+    qt_table::table_set_cell(table, r0, 2, "w toku")
+    let r1: i32 = qt_table::table_add_row(table)
+    qt_table::table_set_cell(table, r1, 0, "Zamówić licencje")
+    qt_table::table_set_cell(table, r1, 1, "2026-10-25")
+    qt_table::table_set_cell(table, r1, 2, "czeka")
+    qt_table::table_set_cell_background(table, r1, 2, qt_gfx::rgb(255, 224, 130))
+    qt_extras::stack_add_page(stack, table)
+
+    let cal: qt_types::Widget = qt_extras::new_calendar()
+    let when: qt_types::Widget = qt_extras::new_dateedit(2026, 10, 18)
+    qt_extras::dateedit_set_popup(when, true)
+    let at: qt_types::Widget = qt_extras::new_timeedit(9, 30, 0)
+    let page2: qt_types::Widget = qt_layout::panel_column([cal, qt_layout::panel(qt_layout::row([when, at]))])
+    qt_extras::stack_add_page(stack, page2)
+
+    let split: qt_types::Widget = qt_extras::new_splitter(false)
+    qt_extras::splitter_add_widget(split, tree)
+    qt_extras::splitter_add_widget(split, stack)
+    qt_extras::splitter_set_sizes2(split, 200, 560)
+    qt_extras::splitter_set_stretch(split, 1, 1)
+    qt_window::window_set_central_widget(window, split)
+
+    ;; Tray (optional)
+    let menu: qt_types::Menu = qt_tray::new_menu("Dane")
+    let act_quit: qt_types::Action = qt_window::menu_add_action(menu, "Zakończ", "")
+    let tray: qt_types::Tray = qt_tray::new_tray("theme:x-office-address-book", "Dane")
+    qt_tray::set_menu(tray, menu)
+    if qt_tray::available() is
+        qt_tray::show(tray)
+        qt_tray::notify(tray, "Dane", "Aplikacja uruchomiona", qt_tray::NOTIFY_INFO, 3000)
+    end
+
+    let shortcut: qt_types::Shortcut = qt_input::new_shortcut(window, "Ctrl+Q")
+    qt_widgets::show(window)
+
+    let mut keep_going: bool = true
+    while keep_going is
+        qt_app::process_events()
+        let ev = qt_events::poll_event()
+        if ev != nil is
+            if ev.kind == qt_types::EventKind::TreeSelectionChanged is
+                if ev.text == "Zadania" is
+                    qt_extras::stack_set_index(stack, 0)
+                end
+                if ev.text == "Notatki" is
+                    qt_extras::stack_set_index(stack, 1)
+                end
+                qt_window::window_set_status(window, "Wybrano: " + ev.text, 2000)
+            end
+            if ev.kind == qt_types::EventKind::TableCellEdited is
+                qt_window::window_set_status(window, "Zmieniono komórkę " + to_string(ev.pos_x) + "," + to_string(ev.pos_y), 2000)
+            end
+            if ev.kind == qt_types::EventKind::DateChanged is
+                qt_window::window_set_status(window, "Data: " + ev.text, 2000)
+            end
+            if ev.kind == qt_types::EventKind::ShortcutActivated is
+                keep_going = false
+            end
+            if ev.kind == qt_types::EventKind::ActionTriggered is
+                if ev.widget.handle == act_quit.handle is
+                    keep_going = false
+                end
+            end
+            if ev.kind == qt_types::EventKind::WindowClosed is
+                keep_going = false
+            end
+        end
+        keep_going = keep_going && qt_app::is_running()
+    end
+    qt_app::shutdown()
+end
