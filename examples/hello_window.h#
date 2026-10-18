@@ -1,21 +1,30 @@
-mod qt
+use "bit -> qt"
 
 fn main() is
-    qt::init()
+    qt_app::init()
 
-    let window:    qt::Widget = qt::new_window("Hello, Qt6!", 400, 200)
-    let container: qt::Widget = qt::new_container()
-    let label:     qt::Widget = qt::new_label("Witaj ze świata H# + Qt6!")
+    let window:    qt_types::Widget = qt_window::new_window("Witaj, Qt!", 360, 160)
+    let container: qt_types::Widget = qt_widgets::new_container()
+    let label:     qt_types::Widget = qt_widgets::new_label("Qt6 + H# (" + qt_app::qt_version() + ")")
+    qt_widgets::label_set_alignment(label, 1)
 
-    let layout: qt::Layout = qt::new_vbox()
-    qt::layout_add_widget(layout, label)
-    qt::widget_set_layout(container, layout)
+    let layout: qt_types::Layout = qt_layout::new_vbox()
+    qt_layout::layout_add_widget(layout, label)
+    qt_layout::widget_set_layout(container, layout)
 
-    ;; QMainWindow chce centralnego widgetu, a nie layoutu wprost —
-    ;; dlatego cała zawartość ląduje w `container`, a `container`
-    ;; trafia do okna przez `window_set_central_widget`.
-    qt::window_set_central_widget(window, container)
+    qt_window::window_set_central_widget(window, container)
+    qt_window::window_set_auto_close(window, true)
+    qt_widgets::show(window)
 
-    qt::show(window)
-    qt::run()
+    let mut keep_going: bool = true
+    while keep_going is
+        qt_app::process_events()
+        let ev = qt_events::poll_event()
+        if ev != nil is
+            if ev.kind == qt_types::EventKind::WindowClosed is
+                keep_going = false
+            end
+        end
+    end
+    qt_app::shutdown()
 end
