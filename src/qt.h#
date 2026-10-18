@@ -1,379 +1,278 @@
-extern static [c, "qthsharp"] is
-    ;; Cykl życia aplikacji
-    fn qth_app_init() -> int
-    fn qth_app_exec() -> int
-    fn qth_app_quit()
-    fn qth_app_process_events()
-    fn qth_app_is_running() -> i8
-    fn qth_app_set_style(style_name: string)
-    fn qth_app_set_app_name(name: string)
+mod qt_ffi
+mod qt_types
+mod qt_keys
+mod qt_app
+mod qt_widgets
+mod qt_inputs
+mod qt_layout
+mod qt_window
+mod qt_timer
+mod qt_dialogs
+mod qt_events
+mod qt_gfx
+mod qt_input
+mod qt_table
+mod qt_tree
+mod qt_extras
+mod qt_tray
+mod qt_theme
 
-    ;; Tworzenie okien / widgetów
-    fn qth_window_new(title: string, width: i32, height: i32) -> int
-    fn qth_widget_new() -> int
-    fn qth_button_new(text: string) -> int
-    fn qth_label_new(text: string) -> int
-    fn qth_lineedit_new(placeholder: string) -> int
-    fn qth_checkbox_new(text: string) -> int
-    fn qth_slider_new(min: i32, max: i32, initial: i32) -> int
+;; ── Compatibility facade (qt 0.1 API) ────────────────────────────────────
+;; Programs written against 0.1 (`qt::new_button(...)`, `qt::Widget`) keep
+;; working: every function below only forwards to the module that owns it.
+;; New code should call the modules directly (qt_widgets::new_button, …).
 
-    ;; Layouty
-    fn qth_vbox_new() -> int
-    fn qth_hbox_new() -> int
-    fn qth_layout_add_widget(layout_h: int, widget_h: int)
-    fn qth_layout_add_spacing(layout_h: int, px: i32)
-    fn qth_layout_add_stretch(layout_h: int, stretch: i32)
-    fn qth_layout_set_margins(layout_h: int, l: i32, t: i32, r: i32, b: i32)
-    fn qth_widget_set_layout(widget_h: int, layout_h: int)
+pub type Widget    = qt_types::Widget
+pub type Layout    = qt_types::Layout
+pub type Event     = qt_types::Event
+pub type EventKind = qt_types::EventKind
 
-    ;; Ogólne operacje na QWidget
-    fn qth_widget_show(h: int)
-    fn qth_widget_hide(h: int)
-    fn qth_widget_close(h: int)
-    fn qth_widget_resize(h: int, w: i32, hgt: i32)
-    fn qth_widget_move(h: int, x: i32, y: i32)
-    fn qth_widget_set_enabled(h: int, enabled: i8)
-    fn qth_widget_set_visible(h: int, visible: i8)
-    fn qth_widget_set_style_sheet(h: int, css: string)
-    fn qth_widget_set_fixed_size(h: int, w: i32, hgt: i32)
-    fn qth_window_set_central_widget(window_h: int, widget_h: int)
-    fn qth_window_set_title(h: int, title: string)
-    fn qth_widget_destroy(h: int)
-
-    ;; QLabel
-    fn qth_label_set_text(h: int, text: string)
-    fn qth_label_get_text(h: int) -> string
-
-    ;; QPushButton
-    fn qth_button_set_text(h: int, text: string)
-
-    ;; QLineEdit
-    fn qth_lineedit_get_text(h: int) -> string
-    fn qth_lineedit_set_text(h: int, text: string)
-    fn qth_lineedit_set_placeholder(h: int, text: string)
-    fn qth_lineedit_set_read_only(h: int, read_only: i8)
-    fn qth_lineedit_set_echo_password(h: int, is_password: i8)
-
-    ;; QCheckBox
-    fn qth_checkbox_is_checked(h: int) -> i8
-    fn qth_checkbox_set_checked(h: int, checked: i8)
-
-    ;; QSlider
-    fn qth_slider_get_value(h: int) -> i32
-    fn qth_slider_set_value(h: int, value: i32)
-
-    ;; Dialogi
-    fn qth_show_info(parent_h: int, title: string, text: string)
-    fn qth_show_warning(parent_h: int, title: string, text: string)
-    fn qth_show_error(parent_h: int, title: string, text: string)
-    fn qth_show_question(parent_h: int, title: string, text: string) -> i8
-
-    ;; Kolejka zdarzeń
-    fn qth_poll_event() -> i32
-    fn qth_event_handle() -> int
-
-    ;; Pamięć
-    fn qth_free_string(s: string)
-end
-
-;; Same archiwum `libqthsharp.a` nie ma żadnych zależności Qt zapisanych
-;; jako `-l...` (to statyczna biblioteka .a, nie .so z wpisanym DT_NEEDED),
-;; więc program końcowy sam musi dociągnąć Qt6 + libstdc++ przy
-;; linkowaniu. Ten blok nie deklaruje żadnych funkcji — służy wyłącznie
-;; do wstrzyknięcia flag linkera (`pkg-config --libs Qt6Widgets`, co samo
-;; w sobie ciągnie Qt6Core/Qt6Gui przez `Requires:` w plikach .pc, plus
-;; automatyczne `-lstdc++` doklejane przez H# dla każdego bloku `[c++]`).
-extern dynamic [c++, "Qt6Widgets"] is
-end
-
-;; ── Typy wysokiego poziomu ───────────────────────────────────────────
-
-;; Uchwyt do dowolnego widgetu Qt (QWidget i pochodne: okno, przycisk,
-;; etykieta, pole tekstowe, checkbox, suwak, kontener).
-struct Widget is
-    pub handle: int
-end
-
-;; Uchwyt do layoutu Qt (QVBoxLayout / QHBoxLayout).
-struct Layout is
-    pub handle: int
-end
-
-enum EventKind is
-    Clicked
-    TextChanged
-    ReturnPressed
-    Toggled
-    WindowClosed
-    ValueChanged
-    Unknown
-end
-
-struct Event is
-    pub kind:   EventKind
-    pub widget: Widget
-end
-
-fn event_kind_from_i32(k: i32) -> EventKind is
-    match k is
-        1 => is return EventKind::Clicked end
-        2 => is return EventKind::TextChanged end
-        3 => is return EventKind::ReturnPressed end
-        4 => is return EventKind::Toggled end
-        5 => is return EventKind::WindowClosed end
-        6 => is return EventKind::ValueChanged end
-        _ => is return EventKind::Unknown end
-    end
-end
-
-;; ── Aplikacja ────────────────────────────────────────────────────────
-
-;; Inicjalizuje `QApplication` (jednorazowo — kolejne wywołania są
-;; bezpieczne i nic nie robią). Wywołaj to jako pierwszą rzecz w `main()`.
+;; old API: qt::init  →  qt_app::init
 pub fn init() is
-    qth_app_init()
+    qt_app::init()
 end
 
-;; Uruchamia natywną, blokującą pętlę zdarzeń Qt (`QApplication::exec()`).
-;; Użyj tego zamiast ręcznej pętli `poll_event()`, jeśli Twoja aplikacja
-;; nie potrzebuje nic robić poza reagowaniem na zdarzenia GUI — w takim
-;; wypadku podłącz logikę pod widgety *przed* wywołaniem `run()` i
-;; sprawdzaj zdarzenia w osobnym wątku/timerze (poza zakresem tej wersji
-;; biblioteki) albo po prostu użyj pętli `poll_event()` poniżej, która
-;; działa świetnie dla zwykłych, jednowątkowych aplikacji H#.
+;; old API: qt::run  →  qt_app::run
 pub fn run() -> int is
-    return qth_app_exec()
+    return qt_app::run()
 end
 
-;; Kończy pętlę zdarzeń uruchomioną przez `run()`.
+;; old API: qt::quit  →  qt_app::quit
 pub fn quit() is
-    qth_app_quit()
+    qt_app::quit()
 end
 
-;; Przetwarza oczekujące zdarzenia Qt bez blokowania — wywołuj to w
-;; każdej iteracji własnej pętli głównej przed `poll_event()`.
+;; old API: qt::process_events  →  qt_app::process_events
 pub fn process_events() is
-    qth_app_process_events()
+    qt_app::process_events()
 end
 
-;; Czy aplikacja wciąż działa (nikt nie wywołał jeszcze `quit()`).
+;; old API: qt::is_running  →  qt_app::is_running
 pub fn is_running() -> bool is
-    return qth_app_is_running() != 0
+    return qt_app::is_running()
 end
 
+;; old API: qt::set_style  →  qt_app::set_style
 pub fn set_style(style_name: string) is
-    qth_app_set_style(style_name)
+    qt_app::set_style(style_name)
 end
 
+;; old API: qt::set_app_name  →  qt_app::set_app_name
 pub fn set_app_name(name: string) is
-    qth_app_set_app_name(name)
+    qt_app::set_app_name(name)
 end
 
-;; Odbiera pojedyncze zdarzenie z kolejki, jeśli jakieś czeka (albo `nil`,
-;; gdy kolejka jest pusta). Typowe użycie:
-;;
-;;   let mut keep_going: bool = true
-;;   while keep_going is
-;;       qt::process_events()
-;;       let ev = qt::poll_event()
-;;       if ev != nil is
-;;           match ev.kind is
-;;               qt::EventKind::Clicked      => is write("kliknięto!") end
-;;               qt::EventKind::WindowClosed => is keep_going = false end
-;;               _                           => is end
-;;           end
-;;       end
-;;       keep_going = keep_going && qt::is_running()
-;;   end
-pub fn poll_event() -> Event? is
-    let kind_raw: i32 = qth_poll_event()
-    if kind_raw == 0 is
-        return nil
-    end
-    return Event {
-        kind:   event_kind_from_i32(kind_raw),
-        widget: Widget { handle: qth_event_handle() },
-    }
+;; old API: qt::poll_event  →  qt_events::poll_event
+pub fn poll_event() -> qt_types::Event? is
+    return qt_events::poll_event()
 end
 
-;; ── Okna ─────────────────────────────────────────────────────────────
-
-pub fn new_window(title: string, width: i32, height: i32) -> Widget is
-    return Widget { handle: qth_window_new(title, width, height) }
+;; old API: qt::new_window  →  qt_window::new_window
+pub fn new_window(title: string, width: i32, height: i32) -> qt_types::Widget is
+    return qt_window::new_window(title, width, height)
 end
 
-pub fn window_set_central_widget(window: Widget, content: Widget) is
-    qth_window_set_central_widget(window.handle, content.handle)
+;; old API: qt::window_set_central_widget  →  qt_window::window_set_central_widget
+pub fn window_set_central_widget(window: qt_types::Widget, content: qt_types::Widget) is
+    qt_window::window_set_central_widget(window, content)
 end
 
-pub fn window_set_title(window: Widget, title: string) is
-    qth_window_set_title(window.handle, title)
+;; old API: qt::window_set_title  →  qt_window::window_set_title
+pub fn window_set_title(window: qt_types::Widget, title: string) is
+    qt_window::window_set_title(window, title)
 end
 
-;; ── Widgety ──────────────────────────────────────────────────────────
-
-pub fn new_container() -> Widget is
-    return Widget { handle: qth_widget_new() }
+;; old API: qt::new_container  →  qt_widgets::new_container
+pub fn new_container() -> qt_types::Widget is
+    return qt_widgets::new_container()
 end
 
-pub fn new_button(text: string) -> Widget is
-    return Widget { handle: qth_button_new(text) }
+;; old API: qt::new_button  →  qt_widgets::new_button
+pub fn new_button(text: string) -> qt_types::Widget is
+    return qt_widgets::new_button(text)
 end
 
-pub fn button_set_text(button: Widget, text: string) is
-    qth_button_set_text(button.handle, text)
+;; old API: qt::button_set_text  →  qt_widgets::button_set_text
+pub fn button_set_text(button: qt_types::Widget, text: string) is
+    qt_widgets::button_set_text(button, text)
 end
 
-pub fn new_label(text: string) -> Widget is
-    return Widget { handle: qth_label_new(text) }
+;; old API: qt::new_label  →  qt_widgets::new_label
+pub fn new_label(text: string) -> qt_types::Widget is
+    return qt_widgets::new_label(text)
 end
 
-pub fn label_set_text(label: Widget, text: string) is
-    qth_label_set_text(label.handle, text)
+;; old API: qt::label_set_text  →  qt_widgets::label_set_text
+pub fn label_set_text(label: qt_types::Widget, text: string) is
+    qt_widgets::label_set_text(label, text)
 end
 
-pub fn label_get_text(label: Widget) -> string is
-    return qth_label_get_text(label.handle)
+;; old API: qt::label_get_text  →  qt_widgets::label_get_text
+pub fn label_get_text(label: qt_types::Widget) -> string is
+    return qt_widgets::label_get_text(label)
 end
 
-pub fn new_lineedit(placeholder: string) -> Widget is
-    return Widget { handle: qth_lineedit_new(placeholder) }
+;; old API: qt::new_lineedit  →  qt_inputs::new_lineedit
+pub fn new_lineedit(placeholder: string) -> qt_types::Widget is
+    return qt_inputs::new_lineedit(placeholder)
 end
 
-pub fn lineedit_get_text(edit: Widget) -> string is
-    return qth_lineedit_get_text(edit.handle)
+;; old API: qt::lineedit_get_text  →  qt_inputs::lineedit_get_text
+pub fn lineedit_get_text(edit: qt_types::Widget) -> string is
+    return qt_inputs::lineedit_get_text(edit)
 end
 
-pub fn lineedit_set_text(edit: Widget, text: string) is
-    qth_lineedit_set_text(edit.handle, text)
+;; old API: qt::lineedit_set_text  →  qt_inputs::lineedit_set_text
+pub fn lineedit_set_text(edit: qt_types::Widget, text: string) is
+    qt_inputs::lineedit_set_text(edit, text)
 end
 
-pub fn lineedit_set_placeholder(edit: Widget, text: string) is
-    qth_lineedit_set_placeholder(edit.handle, text)
+;; old API: qt::lineedit_set_placeholder  →  qt_inputs::lineedit_set_placeholder
+pub fn lineedit_set_placeholder(edit: qt_types::Widget, text: string) is
+    qt_inputs::lineedit_set_placeholder(edit, text)
 end
 
-pub fn lineedit_set_read_only(edit: Widget, read_only: bool) is
-    qth_lineedit_set_read_only(edit.handle, if read_only then 1 else 0)
+;; old API: qt::lineedit_set_read_only  →  qt_inputs::lineedit_set_read_only
+pub fn lineedit_set_read_only(edit: qt_types::Widget, read_only: bool) is
+    qt_inputs::lineedit_set_read_only(edit, read_only)
 end
 
-pub fn lineedit_set_password_mode(edit: Widget, is_password: bool) is
-    qth_lineedit_set_echo_password(edit.handle, if is_password then 1 else 0)
+;; old API: qt::lineedit_set_password_mode  →  qt_inputs::lineedit_set_password_mode
+pub fn lineedit_set_password_mode(edit: qt_types::Widget, is_password: bool) is
+    qt_inputs::lineedit_set_password_mode(edit, is_password)
 end
 
-pub fn new_checkbox(text: string) -> Widget is
-    return Widget { handle: qth_checkbox_new(text) }
+;; old API: qt::new_checkbox  →  qt_widgets::new_checkbox
+pub fn new_checkbox(text: string) -> qt_types::Widget is
+    return qt_widgets::new_checkbox(text)
 end
 
-pub fn checkbox_is_checked(checkbox: Widget) -> bool is
-    return qth_checkbox_is_checked(checkbox.handle) != 0
+;; old API: qt::checkbox_is_checked  →  qt_widgets::checkbox_is_checked
+pub fn checkbox_is_checked(checkbox: qt_types::Widget) -> bool is
+    return qt_widgets::checkbox_is_checked(checkbox)
 end
 
-pub fn checkbox_set_checked(checkbox: Widget, checked: bool) is
-    qth_checkbox_set_checked(checkbox.handle, if checked then 1 else 0)
+;; old API: qt::checkbox_set_checked  →  qt_widgets::checkbox_set_checked
+pub fn checkbox_set_checked(checkbox: qt_types::Widget, checked: bool) is
+    qt_widgets::checkbox_set_checked(checkbox, checked)
 end
 
-pub fn new_slider(min: i32, max: i32, initial: i32) -> Widget is
-    return Widget { handle: qth_slider_new(min, max, initial) }
+;; old API: qt::new_slider  →  qt_inputs::new_slider
+pub fn new_slider(min: i32, max: i32, initial: i32) -> qt_types::Widget is
+    return qt_inputs::new_slider(min, max, initial)
 end
 
-pub fn slider_get_value(slider: Widget) -> i32 is
-    return qth_slider_get_value(slider.handle)
+;; old API: qt::slider_get_value  →  qt_inputs::slider_get_value
+pub fn slider_get_value(slider: qt_types::Widget) -> i32 is
+    return qt_inputs::slider_get_value(slider)
 end
 
-pub fn slider_set_value(slider: Widget, value: i32) is
-    qth_slider_set_value(slider.handle, value)
+;; old API: qt::slider_set_value  →  qt_inputs::slider_set_value
+pub fn slider_set_value(slider: qt_types::Widget, value: i32) is
+    qt_inputs::slider_set_value(slider, value)
 end
 
-;; ── Layouty ──────────────────────────────────────────────────────────
-
-pub fn new_vbox() -> Layout is
-    return Layout { handle: qth_vbox_new() }
+;; old API: qt::new_vbox  →  qt_layout::new_vbox
+pub fn new_vbox() -> qt_types::Layout is
+    return qt_layout::new_vbox()
 end
 
-pub fn new_hbox() -> Layout is
-    return Layout { handle: qth_hbox_new() }
+;; old API: qt::new_hbox  →  qt_layout::new_hbox
+pub fn new_hbox() -> qt_types::Layout is
+    return qt_layout::new_hbox()
 end
 
-pub fn layout_add_widget(layout: Layout, widget: Widget) is
-    qth_layout_add_widget(layout.handle, widget.handle)
+;; old API: qt::layout_add_widget  →  qt_layout::layout_add_widget
+pub fn layout_add_widget(layout: qt_types::Layout, widget: qt_types::Widget) is
+    qt_layout::layout_add_widget(layout, widget)
 end
 
-pub fn layout_add_spacing(layout: Layout, px: i32) is
-    qth_layout_add_spacing(layout.handle, px)
+;; old API: qt::layout_add_spacing  →  qt_layout::layout_add_spacing
+pub fn layout_add_spacing(layout: qt_types::Layout, px: i32) is
+    qt_layout::layout_add_spacing(layout, px)
 end
 
-pub fn layout_add_stretch(layout: Layout, stretch: i32) is
-    qth_layout_add_stretch(layout.handle, stretch)
+;; old API: qt::layout_add_stretch  →  qt_layout::layout_add_stretch
+pub fn layout_add_stretch(layout: qt_types::Layout, stretch: i32) is
+    qt_layout::layout_add_stretch(layout, stretch)
 end
 
-pub fn layout_set_margins(layout: Layout, l: i32, t: i32, r: i32, b: i32) is
-    qth_layout_set_margins(layout.handle, l, t, r, b)
+;; old API: qt::layout_set_margins  →  qt_layout::layout_set_margins
+pub fn layout_set_margins(layout: qt_types::Layout, l: i32, t: i32, r: i32, b: i32) is
+    qt_layout::layout_set_margins(layout, l, t, r, b)
 end
 
-pub fn widget_set_layout(widget: Widget, layout: Layout) is
-    qth_widget_set_layout(widget.handle, layout.handle)
+;; old API: qt::widget_set_layout  →  qt_layout::widget_set_layout
+pub fn widget_set_layout(widget: qt_types::Widget, layout: qt_types::Layout) is
+    qt_layout::widget_set_layout(widget, layout)
 end
 
-;; ── Wspólne operacje na widgetach ────────────────────────────────────
-
-pub fn show(widget: Widget) is
-    qth_widget_show(widget.handle)
+;; old API: qt::show  →  qt_widgets::show
+pub fn show(widget: qt_types::Widget) is
+    qt_widgets::show(widget)
 end
 
-pub fn hide(widget: Widget) is
-    qth_widget_hide(widget.handle)
+;; old API: qt::hide  →  qt_widgets::hide
+pub fn hide(widget: qt_types::Widget) is
+    qt_widgets::hide(widget)
 end
 
-pub fn close(widget: Widget) is
-    qth_widget_close(widget.handle)
+;; old API: qt::close  →  qt_widgets::close
+pub fn close(widget: qt_types::Widget) is
+    qt_widgets::close(widget)
 end
 
-pub fn resize(widget: Widget, w: i32, h: i32) is
-    qth_widget_resize(widget.handle, w, h)
+;; old API: qt::resize  →  qt_widgets::resize
+pub fn resize(widget: qt_types::Widget, w: i32, h: i32) is
+    qt_widgets::resize(widget, w, h)
 end
 
-pub fn move_to(widget: Widget, x: i32, y: i32) is
-    qth_widget_move(widget.handle, x, y)
+;; old API: qt::move_to  →  qt_widgets::move_to
+pub fn move_to(widget: qt_types::Widget, x: i32, y: i32) is
+    qt_widgets::move_to(widget, x, y)
 end
 
-pub fn set_enabled(widget: Widget, enabled: bool) is
-    qth_widget_set_enabled(widget.handle, if enabled then 1 else 0)
+;; old API: qt::set_enabled  →  qt_widgets::set_enabled
+pub fn set_enabled(widget: qt_types::Widget, enabled: bool) is
+    qt_widgets::set_enabled(widget, enabled)
 end
 
-pub fn set_visible(widget: Widget, visible: bool) is
-    qth_widget_set_visible(widget.handle, if visible then 1 else 0)
+;; old API: qt::set_visible  →  qt_widgets::set_visible
+pub fn set_visible(widget: qt_types::Widget, visible: bool) is
+    qt_widgets::set_visible(widget, visible)
 end
 
-pub fn set_style_sheet(widget: Widget, css: string) is
-    qth_widget_set_style_sheet(widget.handle, css)
+;; old API: qt::set_style_sheet  →  qt_widgets::set_style_sheet
+pub fn set_style_sheet(widget: qt_types::Widget, css: string) is
+    qt_widgets::set_style_sheet(widget, css)
 end
 
-pub fn set_fixed_size(widget: Widget, w: i32, h: i32) is
-    qth_widget_set_fixed_size(widget.handle, w, h)
+;; old API: qt::set_fixed_size  →  qt_widgets::set_fixed_size
+pub fn set_fixed_size(widget: qt_types::Widget, w: i32, h: i32) is
+    qt_widgets::set_fixed_size(widget, w, h)
 end
 
-;; Zwalnia widget, który nie jest już potrzebny i nie ma rodzica
-;; (widgety dodane do layoutu / okna są zwalniane automatycznie przez Qt
-;; razem z rodzicem — to jest tylko dla ręcznie tworzonych, osieroconych
-;; uchwytów).
-pub fn destroy(widget: Widget) is
-    qth_widget_destroy(widget.handle)
+;; old API: qt::destroy  →  qt_widgets::destroy
+pub fn destroy(widget: qt_types::Widget) is
+    qt_widgets::destroy(widget)
 end
 
-;; ── Dialogi ──────────────────────────────────────────────────────────
-
-pub fn show_info(parent: Widget, title: string, text: string) is
-    qth_show_info(parent.handle, title, text)
+;; old API: qt::show_info  →  qt_dialogs::show_info
+pub fn show_info(parent: qt_types::Widget, title: string, text: string) is
+    qt_dialogs::show_info(parent, title, text)
 end
 
-pub fn show_warning(parent: Widget, title: string, text: string) is
-    qth_show_warning(parent.handle, title, text)
+;; old API: qt::show_warning  →  qt_dialogs::show_warning
+pub fn show_warning(parent: qt_types::Widget, title: string, text: string) is
+    qt_dialogs::show_warning(parent, title, text)
 end
 
-pub fn show_error(parent: Widget, title: string, text: string) is
-    qth_show_error(parent.handle, title, text)
+;; old API: qt::show_error  →  qt_dialogs::show_error
+pub fn show_error(parent: qt_types::Widget, title: string, text: string) is
+    qt_dialogs::show_error(parent, title, text)
 end
 
-pub fn show_question(parent: Widget, title: string, text: string) -> bool is
-    return qth_show_question(parent.handle, title, text) != 0
+;; old API: qt::show_question  →  qt_dialogs::show_question
+pub fn show_question(parent: qt_types::Widget, title: string, text: string) -> bool is
+    return qt_dialogs::show_question(parent, title, text)
 end
