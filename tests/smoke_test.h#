@@ -1,62 +1,171 @@
 mod qt
 
+;; Runs headless: the offscreen Qt platform needs no display (CI-friendly).
+
 #[test]
 fn test_app_lifecycle() is
-    qt::init()
-    assert_true(qt::is_running())
+    qt_app::init_offscreen()
+    assert_true(qt_app::is_running())
+end
+
+#[test]
+fn test_version_info() is
+    assert_true(string_len(qt_app::version()) > 0)
+    assert_true(string_len(qt_app::qt_version()) > 0)
 end
 
 #[test]
 fn test_widget_handles_are_nonzero() is
-    let window: qt::Widget = qt::new_window("test", 100, 100)
+    let window: qt_types::Widget = qt_window::new_window("test", 100, 100)
     assert_true(window.handle != 0)
-
-    let label: qt::Widget = qt::new_label("hello")
+    let label: qt_types::Widget = qt_widgets::new_label("hello")
     assert_true(label.handle != 0)
-
-    let button: qt::Widget = qt::new_button("click")
+    let button: qt_types::Widget = qt_widgets::new_button("click")
     assert_true(button.handle != 0)
-
-    qt::destroy(label)
-    qt::destroy(button)
-    qt::destroy(window)
+    qt_widgets::destroy(label)
+    qt_widgets::destroy(button)
+    qt_widgets::destroy(window)
+    qt_app::process_events()
 end
 
 #[test]
 fn test_label_text_roundtrip() is
-    let label: qt::Widget = qt::new_label("początek")
-    assert_eq(qt::label_get_text(label), "początek")
-
-    qt::label_set_text(label, "zmieniono")
-    assert_eq(qt::label_get_text(label), "zmieniono")
-
-    qt::destroy(label)
+    let label: qt_types::Widget = qt_widgets::new_label("początek")
+    assert_eq(qt_widgets::label_get_text(label), "początek")
+    qt_widgets::label_set_text(label, "zmieniono")
+    assert_eq(qt_widgets::label_get_text(label), "zmieniono")
+    qt_widgets::destroy(label)
 end
 
 #[test]
 fn test_checkbox_toggle() is
-    let cb: qt::Widget = qt::new_checkbox("zgadzam się")
-    assert_true(!qt::checkbox_is_checked(cb))
-
-    qt::checkbox_set_checked(cb, true)
-    assert_true(qt::checkbox_is_checked(cb))
-
-    qt::destroy(cb)
+    let cb: qt_types::Widget = qt_widgets::new_checkbox("zgadzam się")
+    assert_true(!qt_widgets::checkbox_is_checked(cb))
+    qt_widgets::checkbox_set_checked(cb, true)
+    assert_true(qt_widgets::checkbox_is_checked(cb))
+    qt_widgets::destroy(cb)
 end
 
 #[test]
-fn test_slider_bounds() is
-    let slider: qt::Widget = qt::new_slider(0, 100, 42)
-    assert_eq(qt::slider_get_value(slider), 42)
+fn test_slider_and_spinbox() is
+    let slider: qt_types::Widget = qt_inputs::new_slider(0, 100, 42)
+    assert_eq(qt_inputs::slider_get_value(slider), 42)
+    qt_inputs::slider_set_value(slider, 7)
+    assert_eq(qt_inputs::slider_get_value(slider), 7)
 
-    qt::slider_set_value(slider, 7)
-    assert_eq(qt::slider_get_value(slider), 7)
+    let spin: qt_types::Widget = qt_inputs::new_spinbox(0, 10, 3)
+    qt_inputs::spinbox_set_value(spin, 99)
+    assert_eq(qt_inputs::spinbox_get_value(spin), 10)
 
-    qt::destroy(slider)
+    qt_widgets::destroy(slider)
+    qt_widgets::destroy(spin)
+end
+
+#[test]
+fn test_combobox_and_list() is
+    let combo: qt_types::Widget = qt_inputs::new_combobox()
+    qt_inputs::combobox_add_item(combo, "jeden")
+    qt_inputs::combobox_add_item(combo, "dwa")
+    qt_inputs::combobox_set_index(combo, 1)
+    assert_eq(qt_inputs::combobox_get_text(combo), "dwa")
+
+    let list: qt_types::Widget = qt_inputs::new_list()
+    qt_inputs::list_add_item(list, "a")
+    qt_inputs::list_add_item(list, "b")
+    assert_eq(qt_inputs::list_count(list), 2)
+    qt_inputs::list_remove_row(list, 0)
+    assert_eq(qt_inputs::list_item_text(list, 0), "b")
+
+    qt_widgets::destroy(combo)
+    qt_widgets::destroy(list)
+end
+
+#[test]
+fn test_destroyed_handle_is_harmless() is
+    let label: qt_types::Widget = qt_widgets::new_label("x")
+    assert_true(qt_app::is_alive(label))
+    qt_widgets::destroy(label)
+    qt_app::process_events()
+    assert_true(!qt_app::is_alive(label))
+    qt_widgets::label_set_text(label, "no-op")
+    assert_eq(qt_widgets::label_get_text(label), "")
 end
 
 #[test]
 fn test_no_pending_events_initially() is
-    let ev = qt::poll_event()
+    qt_events::clear()
+    let ev = qt_events::poll_event()
     assert_true(ev == nil)
+end
+
+#[test]
+fn test_table_roundtrip_and_sort() is
+    let table: qt_types::Widget = qt_table::new_table(0, 2)
+    let r0: i32 = qt_table::table_add_row(table)
+    let r1: i32 = qt_table::table_add_row(table)
+    qt_table::table_set_cell(table, r0, 0, "b")
+    qt_table::table_set_cell(table, r1, 0, "a")
+    qt_table::table_sort_by(table, 0, false)
+    assert_eq(qt_table::table_get_cell(table, 0, 0), "a")
+    assert_eq(qt_table::table_get_cell(table, 9, 9), "")
+    assert_eq(qt_table::table_rows(table), 2)
+    qt_widgets::destroy(table)
+end
+
+#[test]
+fn test_tree_items() is
+    let tree: qt_types::Widget = qt_tree::new_tree(1)
+    let a: qt_types::TreeItem = qt_tree::tree_add_item(tree, qt_tree::root(), "a")
+    let b: qt_types::TreeItem = qt_tree::tree_add_item(tree, a, "b")
+    assert_eq(qt_tree::tree_child_count(tree, qt_tree::root()), 1)
+    assert_eq(qt_tree::tree_child_count(tree, a), 1)
+    qt_tree::tree_remove_item(tree, a)
+    assert_eq(qt_tree::tree_get_item_text(tree, b, 0), "")
+    assert_eq(qt_tree::tree_child_count(tree, qt_tree::root()), 0)
+    qt_widgets::destroy(tree)
+end
+
+#[test]
+fn test_canvas_records_ops() is
+    let canvas: qt_types::Widget = qt_gfx::new_canvas(50, 50)
+    qt_gfx::canvas_draw_rect(canvas, 1.0, 1.0, 10.0, 10.0)
+    qt_gfx::canvas_draw_text(canvas, 5.0, 5.0, "x")
+    assert_eq(qt_gfx::canvas_op_count(canvas), 2)
+    qt_gfx::canvas_clear(canvas)
+    assert_eq(qt_gfx::canvas_op_count(canvas), 0)
+    assert_eq(qt_gfx::rgb(255, 0, 0), 16711680)
+    qt_widgets::destroy(canvas)
+end
+
+#[test]
+fn test_date_and_stack() is
+    let d: qt_types::Widget = qt_extras::new_dateedit(2026, 10, 16)
+    assert_eq(qt_extras::dateedit_get_ymd(d), 20261016)
+    assert_eq(qt_extras::dateedit_get_text(d), "2026-10-16")
+    let stack: qt_types::Widget = qt_extras::new_stack()
+    qt_extras::stack_add_page(stack, qt_widgets::new_label("a"))
+    qt_extras::stack_add_page(stack, qt_widgets::new_label("b"))
+    qt_extras::stack_set_index(stack, 1)
+    assert_eq(qt_extras::stack_get_index(stack), 1)
+    qt_widgets::destroy(d)
+    qt_widgets::destroy(stack)
+end
+
+#[test]
+fn test_layout_builders_and_theme() is
+    let a: qt_types::Widget = qt_widgets::new_label("a")
+    let b: qt_types::Widget = qt_widgets::new_label("b")
+    let panel: qt_types::Widget = qt_layout::panel_column([a, b])
+    assert_true(panel.handle != 0)
+    assert_true(qt_theme::apply_dark())
+    assert_true(qt_theme::apply_system())
+    qt_widgets::destroy(panel)
+end
+
+#[test]
+fn test_compat_facade_still_works() is
+    let button: qt::Widget = qt::new_button("stare API")
+    assert_true(button.handle != 0)
+    assert_eq(qt::label_get_text(qt::new_label("x")), "x")
+    qt::destroy(button)
 end
