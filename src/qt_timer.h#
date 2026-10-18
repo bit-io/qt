@@ -1,0 +1,28 @@
+mod qt_ffi
+mod qt_types
+
+;; Creates a stopped timer. `single_shot` true = fires once, then stops.
+pub fn new_timer(interval_ms: i32, single_shot: bool) -> qt_types::Timer is
+    return qt_types::Timer { handle: qth_timer_new(interval_ms, if single_shot then 1 else 0) }
+end
+
+pub fn start(timer: qt_types::Timer) is
+    qth_timer_start(timer.handle)
+end
+
+pub fn stop(timer: qt_types::Timer) is
+    qth_timer_stop(timer.handle)
+end
+
+pub fn set_interval(timer: qt_types::Timer, interval_ms: i32) is
+    qth_timer_set_interval(timer.handle, interval_ms)
+end
+
+pub fn is_active(timer: qt_types::Timer) -> bool is
+    return qth_timer_is_active(timer.handle) != 0
+end
+
+;; Frees the timer (it has no parent widget that would do it).
+pub fn destroy(timer: qt_types::Timer) is
+    qth_object_destroy(timer.handle)
+end
