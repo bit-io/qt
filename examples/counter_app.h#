@@ -1,49 +1,47 @@
-mod qt
+use "bit -> qt"
 
 fn main() is
-    qt::init()
+    qt_app::init()
 
-    let window:    qt::Widget = qt::new_window("Licznik kliknięć", 320, 180)
-    let container: qt::Widget = qt::new_container()
+    let window:    qt_types::Widget = qt_window::new_window("Licznik kliknięć", 320, 180)
+    let container: qt_types::Widget = qt_widgets::new_container()
 
-    let label:  qt::Widget = qt::new_label("Kliknięto: 0 razy")
-    let button: qt::Widget = qt::new_button("Kliknij mnie")
-    let edit:   qt::Widget = qt::new_lineedit("Wpisz coś i naciśnij Enter…")
+    let label:  qt_types::Widget = qt_widgets::new_label("Kliknięto: 0 razy")
+    let button: qt_types::Widget = qt_widgets::new_button("Kliknij mnie")
+    let edit:   qt_types::Widget = qt_inputs::new_lineedit("Wpisz coś i naciśnij Enter…")
 
-    let layout: qt::Layout = qt::new_vbox()
-    qt::layout_add_widget(layout, label)
-    qt::layout_add_widget(layout, button)
-    qt::layout_add_widget(layout, edit)
-    qt::widget_set_layout(container, layout)
+    let layout: qt_types::Layout = qt_layout::new_vbox()
+    qt_layout::layout_add_widget(layout, label)
+    qt_layout::layout_add_widget(layout, button)
+    qt_layout::layout_add_widget(layout, edit)
+    qt_layout::widget_set_layout(container, layout)
 
-    qt::window_set_central_widget(window, container)
-    qt::show(window)
+    qt_window::window_set_central_widget(window, container)
+    qt_widgets::show(window)
 
-    let mut clicks:      int  = 0
-    let mut keep_going:  bool = true
+    let mut clicks:     int  = 0
+    let mut keep_going: bool = true
 
     while keep_going is
-        qt::process_events()
+        qt_app::process_events()
 
-        let ev = qt::poll_event()
+        let ev = qt_events::poll_event()
         if ev != nil is
-            match ev.kind is
-                qt::EventKind::Clicked => is
-                    clicks = clicks + 1
-                    qt::label_set_text(label, "Kliknięto: " + to_string(clicks) + " razy")
-                end
-                qt::EventKind::ReturnPressed => is
-                    let typed: string = qt::lineedit_get_text(edit)
-                    qt::show_info(window, "Wpisany tekst", "Napisałeś: " + typed)
-                    qt::lineedit_set_text(edit, "")
-                end
-                qt::EventKind::WindowClosed => is
-                    keep_going = false
-                end
-                _ => is end
+            if ev.kind == qt_types::EventKind::Clicked is
+                clicks = clicks + 1
+                qt_widgets::label_set_text(label, "Kliknięto: " + to_string(clicks) + " razy")
+            end
+            if ev.kind == qt_types::EventKind::ReturnPressed is
+                let typed: string = qt_inputs::lineedit_get_text(edit)
+                qt_dialogs::show_info(window, "Wpisany tekst", "Napisałeś: " + typed)
+                qt_inputs::lineedit_set_text(edit, "")
+            end
+            if ev.kind == qt_types::EventKind::WindowClosed is
+                keep_going = false
             end
         end
 
-        keep_going = keep_going && qt::is_running()
+        keep_going = keep_going && qt_app::is_running()
     end
+    qt_app::shutdown()
 end
