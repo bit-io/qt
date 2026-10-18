@@ -1,0 +1,349 @@
+extern static [c++, "qthsharp"] is
+    fn qth_version() -> string
+    fn qth_qt_version() -> string
+
+    fn qth_app_init() -> int
+    fn qth_app_init_platform(qpa: string) -> int
+    fn qth_app_exec() -> i32
+    fn qth_app_quit()
+    fn qth_app_shutdown()
+    fn qth_app_process_events()
+    fn qth_app_is_running() -> i8
+    fn qth_app_set_style(style_name: string)
+    fn qth_app_set_app_name(name: string)
+    fn qth_app_set_style_sheet(css: string)
+    fn qth_app_set_quit_on_last_window_closed(on: i8)
+
+    fn qth_handle_is_valid(h: int) -> i8
+    fn qth_handle_count() -> int
+    fn qth_object_destroy(h: int)
+
+    fn qth_clipboard_set_text(text: string)
+    fn qth_clipboard_get_text() -> string
+
+    fn qth_free_string(s: string)
+end
+
+;; ── Widget creation + generic QWidget operations ─────────────────────────
+extern static [c++, "qthsharp"] is
+    fn qth_window_new(title: string, width: i32, height: i32) -> int
+    fn qth_widget_new() -> int
+    fn qth_button_new(text: string) -> int
+    fn qth_label_new(text: string) -> int
+    fn qth_lineedit_new(placeholder: string) -> int
+    fn qth_textedit_new(placeholder: string) -> int
+    fn qth_checkbox_new(text: string) -> int
+    fn qth_radio_new(text: string) -> int
+    fn qth_slider_new(min: i32, max: i32, initial: i32) -> int
+    fn qth_spinbox_new(min: i32, max: i32, initial: i32) -> int
+    fn qth_dspinbox_new(min: f64, max: f64, initial: f64, decimals: i32) -> int
+    fn qth_combobox_new() -> int
+    fn qth_progress_new(min: i32, max: i32, initial: i32) -> int
+    fn qth_groupbox_new(title: string) -> int
+    fn qth_tabs_new() -> int
+    fn qth_list_new() -> int
+    fn qth_scroll_new() -> int
+    fn qth_separator_new(vertical: i8) -> int
+
+    fn qth_widget_show(h: int)
+    fn qth_widget_hide(h: int)
+    fn qth_widget_close(h: int)
+    fn qth_widget_resize(h: int, w: i32, hgt: i32)
+    fn qth_widget_move(h: int, x: i32, y: i32)
+    fn qth_widget_set_enabled(h: int, enabled: i8)
+    fn qth_widget_set_visible(h: int, visible: i8)
+    fn qth_widget_set_style_sheet(h: int, css: string)
+    fn qth_widget_set_fixed_size(h: int, w: i32, hgt: i32)
+    fn qth_widget_set_minimum_size(h: int, w: i32, hgt: i32)
+    fn qth_widget_set_maximum_size(h: int, w: i32, hgt: i32)
+    fn qth_widget_set_tooltip(h: int, text: string)
+    fn qth_widget_set_object_name(h: int, name: string)
+    fn qth_widget_set_font(h: int, family: string, point_size: i32, bold: i8, italic: i8)
+    fn qth_widget_set_focus(h: int)
+    fn qth_widget_is_visible(h: int) -> i8
+    fn qth_widget_is_enabled(h: int) -> i8
+    fn qth_widget_width(h: int) -> i32
+    fn qth_widget_height(h: int) -> i32
+    fn qth_widget_destroy(h: int)
+
+    fn qth_label_set_text(h: int, text: string)
+    fn qth_label_get_text(h: int) -> string
+    fn qth_label_set_word_wrap(h: int, wrap: i8)
+    fn qth_label_set_alignment(h: int, alignment: i32)
+
+    fn qth_button_set_text(h: int, text: string)
+    fn qth_button_get_text(h: int) -> string
+
+    fn qth_checkbox_is_checked(h: int) -> i8
+    fn qth_checkbox_set_checked(h: int, checked: i8)
+    fn qth_checkbox_set_text(h: int, text: string)
+
+    fn qth_groupbox_set_title(h: int, title: string)
+    fn qth_groupbox_set_checkable(h: int, checkable: i8)
+    fn qth_groupbox_is_checked(h: int) -> i8
+    fn qth_groupbox_set_checked(h: int, checked: i8)
+
+    fn qth_progress_set_value(h: int, value: i32)
+    fn qth_progress_get_value(h: int) -> i32
+    fn qth_progress_set_range(h: int, min: i32, max: i32)
+    fn qth_progress_set_text_visible(h: int, visible: i8)
+
+    fn qth_tabs_add_tab(tabs: int, page: int, title: string) -> i32
+    fn qth_tabs_get_index(tabs: int) -> i32
+    fn qth_tabs_set_index(tabs: int, index: i32)
+    fn qth_tabs_count(tabs: int) -> i32
+
+    fn qth_scroll_set_widget(scroll: int, widget_h: int)
+    fn qth_scroll_set_widget_resizable(scroll: int, resizable: i8)
+end
+
+;; ── Input widgets ────────────────────────────────────────────────────────
+extern static [c++, "qthsharp"] is
+    fn qth_lineedit_get_text(h: int) -> string
+    fn qth_lineedit_set_text(h: int, text: string)
+    fn qth_lineedit_set_placeholder(h: int, text: string)
+    fn qth_lineedit_set_read_only(h: int, read_only: i8)
+    fn qth_lineedit_set_echo_password(h: int, is_password: i8)
+    fn qth_lineedit_set_max_length(h: int, n: i32)
+    fn qth_lineedit_select_all(h: int)
+
+    fn qth_textedit_get_text(h: int) -> string
+    fn qth_textedit_set_text(h: int, text: string)
+    fn qth_textedit_append(h: int, text: string)
+    fn qth_textedit_clear(h: int)
+    fn qth_textedit_set_read_only(h: int, read_only: i8)
+    fn qth_textedit_set_placeholder(h: int, text: string)
+
+    fn qth_radio_is_checked(h: int) -> i8
+    fn qth_radio_set_checked(h: int, checked: i8)
+
+    fn qth_slider_get_value(h: int) -> i32
+    fn qth_slider_set_value(h: int, value: i32)
+    fn qth_slider_set_range(h: int, min: i32, max: i32)
+
+    fn qth_spinbox_get_value(h: int) -> i32
+    fn qth_spinbox_set_value(h: int, value: i32)
+    fn qth_spinbox_set_range(h: int, min: i32, max: i32)
+    fn qth_spinbox_set_step(h: int, step: i32)
+    fn qth_spinbox_set_suffix(h: int, suffix: string)
+    fn qth_dspinbox_get_value(h: int) -> f64
+    fn qth_dspinbox_set_value(h: int, value: f64)
+    fn qth_dspinbox_set_range(h: int, min: f64, max: f64)
+    fn qth_dspinbox_set_step(h: int, step: f64)
+
+    fn qth_combobox_add_item(h: int, text: string)
+    fn qth_combobox_clear(h: int)
+    fn qth_combobox_count(h: int) -> i32
+    fn qth_combobox_get_index(h: int) -> i32
+    fn qth_combobox_set_index(h: int, index: i32)
+    fn qth_combobox_get_text(h: int) -> string
+    fn qth_combobox_item_text(h: int, index: i32) -> string
+
+    fn qth_list_add_item(h: int, text: string)
+    fn qth_list_clear(h: int)
+    fn qth_list_count(h: int) -> i32
+    fn qth_list_get_row(h: int) -> i32
+    fn qth_list_set_row(h: int, row: i32)
+    fn qth_list_item_text(h: int, row: i32) -> string
+    fn qth_list_remove_row(h: int, row: i32)
+end
+
+;; ── Layouts ──────────────────────────────────────────────────────────────
+extern static [c++, "qthsharp"] is
+    fn qth_vbox_new() -> int
+    fn qth_hbox_new() -> int
+    fn qth_grid_new() -> int
+    fn qth_form_new() -> int
+    fn qth_layout_add_widget(layout_h: int, widget_h: int)
+    fn qth_layout_add_layout(layout_h: int, child_h: int)
+    fn qth_layout_add_spacing(layout_h: int, px: i32)
+    fn qth_layout_add_stretch(layout_h: int, stretch: i32)
+    fn qth_layout_set_margins(layout_h: int, l: i32, t: i32, r: i32, b: i32)
+    fn qth_layout_set_spacing(layout_h: int, px: i32)
+    fn qth_grid_add_widget(layout_h: int, widget_h: int, row: i32, col: i32, row_span: i32, col_span: i32)
+    fn qth_form_add_row(layout_h: int, label: string, widget_h: int)
+    fn qth_widget_set_layout(widget_h: int, layout_h: int)
+end
+
+;; ── Main window, menus, actions, timers ──────────────────────────────────
+extern static [c++, "qthsharp"] is
+    fn qth_window_set_central_widget(window_h: int, widget_h: int)
+    fn qth_window_set_title(h: int, title: string)
+    fn qth_window_set_auto_close(window_h: int, on: i8)
+    fn qth_window_set_status(window_h: int, text: string, timeout_ms: i32)
+    fn qth_window_add_menu(window_h: int, title: string) -> int
+    fn qth_window_add_toolbar_action(window_h: int, text: string) -> int
+
+    fn qth_menu_add_action(menu_h: int, text: string, shortcut: string) -> int
+    fn qth_menu_add_separator(menu_h: int)
+    fn qth_menu_add_submenu(menu_h: int, title: string) -> int
+
+    fn qth_action_set_enabled(h: int, enabled: i8)
+    fn qth_action_set_checkable(h: int, checkable: i8)
+    fn qth_action_is_checked(h: int) -> i8
+    fn qth_action_set_checked(h: int, checked: i8)
+    fn qth_action_set_text(h: int, text: string)
+
+    fn qth_timer_new(interval_ms: i32, single_shot: i8) -> int
+    fn qth_timer_start(h: int)
+    fn qth_timer_stop(h: int)
+    fn qth_timer_set_interval(h: int, interval_ms: i32)
+    fn qth_timer_is_active(h: int) -> i8
+end
+
+;; ── Dialogs and the event queue ──────────────────────────────────────────
+extern static [c++, "qthsharp"] is
+    fn qth_show_info(parent_h: int, title: string, text: string)
+    fn qth_show_warning(parent_h: int, title: string, text: string)
+    fn qth_show_error(parent_h: int, title: string, text: string)
+    fn qth_show_question(parent_h: int, title: string, text: string) -> i8
+    fn qth_input_text(parent_h: int, title: string, label: string, initial: string) -> string
+    fn qth_input_int(parent_h: int, title: string, label: string, value: i32, min: i32, max: i32) -> i32
+    fn qth_input_accepted() -> i8
+    fn qth_file_open(parent_h: int, title: string, dir: string, filter: string) -> string
+    fn qth_file_save(parent_h: int, title: string, dir: string, filter: string) -> string
+    fn qth_dir_select(parent_h: int, title: string, dir: string) -> string
+
+    fn qth_poll_event() -> i32
+    fn qth_event_handle() -> int
+    fn qth_event_value() -> i32
+    fn qth_event_text() -> string
+    fn qth_event_pending() -> i32
+    fn qth_event_clear()
+end
+
+;; ── 0.3: theme, images, canvas, input, table, tree, date/time, layout widgets,
+;;         dialogs, tray ───────────────────────────────────────────────────────
+extern static [c++, "qthsharp"] is
+    fn qth_app_set_theme(name: string) -> i8
+    fn qth_label_set_image(label: int, path: string) -> i8
+    fn qth_label_set_scaled(label: int, scaled: i8)
+    fn qth_button_set_icon(button: int, path: string)
+    fn qth_action_set_icon(action: int, path: string)
+    fn qth_window_set_icon(window: int, path: string)
+    fn qth_app_set_icon(path: string)
+    fn qth_widget_grab_png(widget: int, path: string) -> i8
+    fn qth_canvas_new(width: i32, height: i32) -> int
+    fn qth_canvas_clear(c: int)
+    fn qth_canvas_set_background(c: int, rgb: i32)
+    fn qth_canvas_set_pen(c: int, rgb: i32, width: f64)
+    fn qth_canvas_set_fill(c: int, rgb: i32)
+    fn qth_canvas_set_font(c: int, family: string, point_size: i32, bold: i8, italic: i8)
+    fn qth_canvas_draw_line(c: int, x1: f64, y1: f64, x2: f64, y2: f64)
+    fn qth_canvas_draw_rect(c: int, x: f64, y: f64, w: f64, h: f64)
+    fn qth_canvas_draw_round_rect(c: int, x: f64, y: f64, w: f64, h: f64)
+    fn qth_canvas_draw_ellipse(c: int, x: f64, y: f64, w: f64, h: f64)
+    fn qth_canvas_draw_point(c: int, x: f64, y: f64)
+    fn qth_canvas_draw_text(c: int, x: f64, y: f64, text: string)
+    fn qth_canvas_draw_image(c: int, path: string, x: f64, y: f64, w: f64, h: f64)
+    fn qth_canvas_op_count(c: int) -> i32
+    fn qth_canvas_update(c: int)
+    fn qth_widget_watch_input(widget: int, mask: i32)
+    fn qth_shortcut_new(widget: int, sequence: string) -> int
+    fn qth_event_x() -> i32
+    fn qth_event_y() -> i32
+    fn qth_event_mods() -> i32
+    fn qth_table_new(rows: i32, cols: i32) -> int
+    fn qth_table_set_size(t: int, rows: i32, cols: i32)
+    fn qth_table_rows(t: int) -> i32
+    fn qth_table_cols(t: int) -> i32
+    fn qth_table_set_cell(t: int, row: i32, col: i32, text: string)
+    fn qth_table_get_cell(t: int, row: i32, col: i32) -> string
+    fn qth_table_set_col_header(t: int, col: i32, text: string)
+    fn qth_table_set_row_header(t: int, row: i32, text: string)
+    fn qth_table_add_row(t: int) -> i32
+    fn qth_table_insert_row(t: int, at: i32)
+    fn qth_table_remove_row(t: int, row: i32)
+    fn qth_table_clear(t: int)
+    fn qth_table_current_row(t: int) -> i32
+    fn qth_table_current_col(t: int) -> i32
+    fn qth_table_set_current(t: int, row: i32, col: i32)
+    fn qth_table_set_sorting(t: int, enabled: i8)
+    fn qth_table_sort_by(t: int, col: i32, descending: i8)
+    fn qth_table_set_editable(t: int, editable: i8)
+    fn qth_table_set_select_rows(t: int, whole_rows: i8)
+    fn qth_table_set_alternating_colors(t: int, on: i8)
+    fn qth_table_set_col_width(t: int, col: i32, px: i32)
+    fn qth_table_stretch_columns(t: int, stretch: i8)
+    fn qth_table_set_cell_background(t: int, row: i32, col: i32, rgb: i32)
+    fn qth_table_set_cell_foreground(t: int, row: i32, col: i32, rgb: i32)
+    fn qth_tree_new(columns: i32) -> int
+    fn qth_tree_set_header(t: int, col: i32, text: string)
+    fn qth_tree_set_header_visible(t: int, visible: i8)
+    fn qth_tree_add_item(t: int, parent: int, text: string) -> int
+    fn qth_tree_set_item_text(t: int, item: int, col: i32, text: string)
+    fn qth_tree_get_item_text(t: int, item: int, col: i32) -> string
+    fn qth_tree_remove_item(t: int, item: int)
+    fn qth_tree_clear(t: int)
+    fn qth_tree_current_item(t: int) -> int
+    fn qth_tree_set_current_item(t: int, item: int)
+    fn qth_tree_item_parent(t: int, item: int) -> int
+    fn qth_tree_child_count(t: int, item: int) -> i32
+    fn qth_tree_child_at(t: int, item: int, index: i32) -> int
+    fn qth_tree_set_expanded(t: int, item: int, expanded: i8)
+    fn qth_tree_expand_all(t: int)
+    fn qth_tree_collapse_all(t: int)
+    fn qth_tree_set_sorting(t: int, enabled: i8)
+    fn qth_dateedit_new(year: i32, month: i32, day: i32) -> int
+    fn qth_dateedit_set_date(h: int, year: i32, month: i32, day: i32)
+    fn qth_dateedit_get_ymd(h: int) -> i32
+    fn qth_dateedit_get_text(h: int) -> string
+    fn qth_dateedit_set_popup(h: int, popup: i8)
+    fn qth_timeedit_new(hour: i32, minute: i32, second: i32) -> int
+    fn qth_timeedit_set_time(h: int, hour: i32, minute: i32, second: i32)
+    fn qth_timeedit_get_seconds(h: int) -> i32
+    fn qth_timeedit_get_text(h: int) -> string
+    fn qth_calendar_new() -> int
+    fn qth_calendar_set_date(h: int, year: i32, month: i32, day: i32)
+    fn qth_calendar_get_ymd(h: int) -> i32
+    fn qth_calendar_get_text(h: int) -> string
+    fn qth_date_today_ymd() -> i32
+    fn qth_splitter_new(vertical: i8) -> int
+    fn qth_splitter_add_widget(s: int, widget: int)
+    fn qth_splitter_set_sizes2(s: int, a: i32, b: i32)
+    fn qth_splitter_set_sizes3(s: int, a: i32, b: i32, c: i32)
+    fn qth_splitter_set_stretch(s: int, index: i32, stretch: i32)
+    fn qth_stack_new() -> int
+    fn qth_stack_add_page(s: int, page: int) -> i32
+    fn qth_stack_set_index(s: int, index: i32)
+    fn qth_stack_get_index(s: int) -> i32
+    fn qth_stack_count(s: int) -> i32
+    fn qth_window_add_dock(window: int, title: string, content: int, area: i32) -> int
+    fn qth_color_pick(parent: int, title: string, initial_rgb: i32) -> i32
+    fn qth_font_pick(parent: int, title: string, family: string, size: i32) -> string
+    fn qth_font_last_size() -> i32
+    fn qth_font_last_bold() -> i8
+    fn qth_font_last_italic() -> i8
+    fn qth_progress_dialog_new(parent: int, title: string, label: string, min: i32, max: i32) -> int
+    fn qth_progress_dialog_set_value(h: int, value: i32)
+    fn qth_progress_dialog_set_label(h: int, text: string)
+    fn qth_progress_dialog_was_canceled(h: int) -> i8
+    fn qth_menu_new(title: string) -> int
+    fn qth_menu_popup(menu: int, x: i32, y: i32)
+    fn qth_tray_available() -> i8
+    fn qth_tray_new(icon_path: string, tooltip: string) -> int
+    fn qth_tray_set_icon(tray: int, icon_path: string)
+    fn qth_tray_set_tooltip(tray: int, tooltip: string)
+    fn qth_tray_set_menu(tray: int, menu: int)
+    fn qth_tray_show(tray: int)
+    fn qth_tray_hide(tray: int)
+    fn qth_tray_notify(tray: int, title: string, message: string, kind: i32, timeout_ms: i32)
+end
+
+;; libqthsharp.a is a plain static archive: it carries no `-l` records for
+;; Qt itself. This empty block only makes H# add what
+;; `pkg-config --static --libs Qt6Widgets` prints (Qt6Widgets, Qt6Gui,
+;; Qt6Core …) plus libstdc++, so a single `mod qt` is all a program needs.
+extern static [c++, "Qt6Widgets"] is
+end
+
+;; ── String ownership ─────────────────────────────────────────────────────
+
+;; Every `string` the library returns is malloc'ed on the C++ side. This
+;; copies it into an ordinary H# string and releases the original, so the
+;; wrappers neither leak nor hand out memory that is freed under them.
+pub fn take(raw: string) -> string is
+    let copy: string = string_slice(raw, 0, string_len(raw))
+    qth_free_string(raw)
+    return copy
+end
