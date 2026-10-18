@@ -1,0 +1,55 @@
+mod qt_ffi
+mod qt_types
+
+pub const NOTIFY_NONE:     i32 = 0
+pub const NOTIFY_INFO:     i32 = 1
+pub const NOTIFY_WARNING:  i32 = 2
+pub const NOTIFY_CRITICAL: i32 = 3
+
+;; A menu that belongs to no window — for a tray icon or a context menu.
+;; Fill it with `qt_window::menu_add_action` / `menu_add_separator`.
+pub fn new_menu(title: string) -> qt_types::Menu is
+    return qt_types::Menu { handle: qth_menu_new(title) }
+end
+
+;; Shows the menu at a screen position without blocking: the chosen action
+;; arrives later as `ActionTriggered`.
+pub fn menu_popup(menu: qt_types::Menu, x: i32, y: i32) is
+    qth_menu_popup(menu.handle, x, y)
+end
+
+pub fn available() -> bool is
+    return qth_tray_available() != 0
+end
+
+;; `icon` is a file path or "theme:NAME". Call `show` to make it appear.
+pub fn new_tray(icon: string, tooltip: string) -> qt_types::Tray is
+    return qt_types::Tray { handle: qth_tray_new(icon, tooltip) }
+end
+
+pub fn set_icon(tray: qt_types::Tray, icon: string) is
+    qth_tray_set_icon(tray.handle, icon)
+end
+
+pub fn set_tooltip(tray: qt_types::Tray, tooltip: string) is
+    qth_tray_set_tooltip(tray.handle, tooltip)
+end
+
+;; Right-click menu of the tray icon.
+pub fn set_menu(tray: qt_types::Tray, menu: qt_types::Menu) is
+    qth_tray_set_menu(tray.handle, menu.handle)
+end
+
+pub fn show(tray: qt_types::Tray) is
+    qth_tray_show(tray.handle)
+end
+
+pub fn hide(tray: qt_types::Tray) is
+    qth_tray_hide(tray.handle)
+end
+
+;; Desktop notification through the tray icon (it must be shown).
+;; `kind` is one of NOTIFY_*; `timeout_ms` <= 0 uses 5000.
+pub fn notify(tray: qt_types::Tray, title: string, message: string, kind: i32, timeout_ms: i32) is
+    qth_tray_notify(tray.handle, title, message, kind, timeout_ms)
+end
