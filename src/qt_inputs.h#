@@ -1,0 +1,220 @@
+mod qt_ffi
+mod qt_types
+
+;; ── Line edit ────────────────────────────────────────────────────────────
+
+pub fn new_lineedit(placeholder: string) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_lineedit_new(placeholder) }
+end
+
+pub fn lineedit_get_text(edit: qt_types::Widget) -> string is
+    return qt_ffi::take(qth_lineedit_get_text(edit.handle))
+end
+
+pub fn lineedit_set_text(edit: qt_types::Widget, text: string) is
+    qth_lineedit_set_text(edit.handle, text)
+end
+
+pub fn lineedit_set_placeholder(edit: qt_types::Widget, text: string) is
+    qth_lineedit_set_placeholder(edit.handle, text)
+end
+
+pub fn lineedit_set_read_only(edit: qt_types::Widget, read_only: bool) is
+    qth_lineedit_set_read_only(edit.handle, if read_only then 1 else 0)
+end
+
+pub fn lineedit_set_password_mode(edit: qt_types::Widget, is_password: bool) is
+    qth_lineedit_set_echo_password(edit.handle, if is_password then 1 else 0)
+end
+
+pub fn lineedit_set_max_length(edit: qt_types::Widget, n: i32) is
+    qth_lineedit_set_max_length(edit.handle, n)
+end
+
+pub fn lineedit_select_all(edit: qt_types::Widget) is
+    qth_lineedit_select_all(edit.handle)
+end
+
+;; ── Multi-line text edit ─────────────────────────────────────────────────
+
+pub fn new_textedit(placeholder: string) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_textedit_new(placeholder) }
+end
+
+pub fn textedit_get_text(edit: qt_types::Widget) -> string is
+    return qt_ffi::take(qth_textedit_get_text(edit.handle))
+end
+
+pub fn textedit_set_text(edit: qt_types::Widget, text: string) is
+    qth_textedit_set_text(edit.handle, text)
+end
+
+;; Adds a paragraph at the end (handy as a log view with read-only on).
+pub fn textedit_append(edit: qt_types::Widget, text: string) is
+    qth_textedit_append(edit.handle, text)
+end
+
+pub fn textedit_clear(edit: qt_types::Widget) is
+    qth_textedit_clear(edit.handle)
+end
+
+pub fn textedit_set_read_only(edit: qt_types::Widget, read_only: bool) is
+    qth_textedit_set_read_only(edit.handle, if read_only then 1 else 0)
+end
+
+pub fn textedit_set_placeholder(edit: qt_types::Widget, text: string) is
+    qth_textedit_set_placeholder(edit.handle, text)
+end
+
+;; ── Radio button ─────────────────────────────────────────────────────────
+;; Radio buttons that share a parent widget are mutually exclusive.
+
+pub fn new_radio(text: string) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_radio_new(text) }
+end
+
+pub fn radio_is_checked(radio: qt_types::Widget) -> bool is
+    return qth_radio_is_checked(radio.handle) != 0
+end
+
+pub fn radio_set_checked(radio: qt_types::Widget, checked: bool) is
+    qth_radio_set_checked(radio.handle, if checked then 1 else 0)
+end
+
+;; ── Slider ───────────────────────────────────────────────────────────────
+
+pub fn new_slider(min: i32, max: i32, initial: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_slider_new(min, max, initial) }
+end
+
+pub fn slider_get_value(slider: qt_types::Widget) -> i32 is
+    return qth_slider_get_value(slider.handle)
+end
+
+pub fn slider_set_value(slider: qt_types::Widget, value: i32) is
+    qth_slider_set_value(slider.handle, value)
+end
+
+pub fn slider_set_range(slider: qt_types::Widget, min: i32, max: i32) is
+    qth_slider_set_range(slider.handle, min, max)
+end
+
+;; ── Spin boxes ───────────────────────────────────────────────────────────
+
+pub fn new_spinbox(min: i32, max: i32, initial: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_spinbox_new(min, max, initial) }
+end
+
+pub fn spinbox_get_value(spin: qt_types::Widget) -> i32 is
+    return qth_spinbox_get_value(spin.handle)
+end
+
+pub fn spinbox_set_value(spin: qt_types::Widget, value: i32) is
+    qth_spinbox_set_value(spin.handle, value)
+end
+
+pub fn spinbox_set_range(spin: qt_types::Widget, min: i32, max: i32) is
+    qth_spinbox_set_range(spin.handle, min, max)
+end
+
+pub fn spinbox_set_step(spin: qt_types::Widget, step: i32) is
+    qth_spinbox_set_step(spin.handle, step)
+end
+
+;; Text shown after the number, e.g. " px".
+pub fn spinbox_set_suffix(spin: qt_types::Widget, suffix: string) is
+    qth_spinbox_set_suffix(spin.handle, suffix)
+end
+
+;; Floating-point spin box. Its `ValueChanged` event carries the number as
+;; text (`ev.text`) because `ev.value` is only the integer part.
+pub fn new_dspinbox(min: f64, max: f64, initial: f64, decimals: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_dspinbox_new(min, max, initial, decimals) }
+end
+
+pub fn dspinbox_get_value(spin: qt_types::Widget) -> f64 is
+    return qth_dspinbox_get_value(spin.handle)
+end
+
+pub fn dspinbox_set_value(spin: qt_types::Widget, value: f64) is
+    qth_dspinbox_set_value(spin.handle, value)
+end
+
+pub fn dspinbox_set_range(spin: qt_types::Widget, min: f64, max: f64) is
+    qth_dspinbox_set_range(spin.handle, min, max)
+end
+
+pub fn dspinbox_set_step(spin: qt_types::Widget, step: f64) is
+    qth_dspinbox_set_step(spin.handle, step)
+end
+
+;; ── Combo box ────────────────────────────────────────────────────────────
+
+pub fn new_combobox() -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_combobox_new() }
+end
+
+pub fn combobox_add_item(combo: qt_types::Widget, text: string) is
+    qth_combobox_add_item(combo.handle, text)
+end
+
+pub fn combobox_clear(combo: qt_types::Widget) is
+    qth_combobox_clear(combo.handle)
+end
+
+pub fn combobox_count(combo: qt_types::Widget) -> i32 is
+    return qth_combobox_count(combo.handle)
+end
+
+;; -1 when empty.
+pub fn combobox_get_index(combo: qt_types::Widget) -> i32 is
+    return qth_combobox_get_index(combo.handle)
+end
+
+pub fn combobox_set_index(combo: qt_types::Widget, index: i32) is
+    qth_combobox_set_index(combo.handle, index)
+end
+
+pub fn combobox_get_text(combo: qt_types::Widget) -> string is
+    return qt_ffi::take(qth_combobox_get_text(combo.handle))
+end
+
+pub fn combobox_item_text(combo: qt_types::Widget, index: i32) -> string is
+    return qt_ffi::take(qth_combobox_item_text(combo.handle, index))
+end
+
+;; ── List ─────────────────────────────────────────────────────────────────
+
+pub fn new_list() -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_list_new() }
+end
+
+pub fn list_add_item(list: qt_types::Widget, text: string) is
+    qth_list_add_item(list.handle, text)
+end
+
+pub fn list_clear(list: qt_types::Widget) is
+    qth_list_clear(list.handle)
+end
+
+pub fn list_count(list: qt_types::Widget) -> i32 is
+    return qth_list_count(list.handle)
+end
+
+;; Selected row, -1 when nothing is selected.
+pub fn list_get_row(list: qt_types::Widget) -> i32 is
+    return qth_list_get_row(list.handle)
+end
+
+pub fn list_set_row(list: qt_types::Widget, row: i32) is
+    qth_list_set_row(list.handle, row)
+end
+
+pub fn list_item_text(list: qt_types::Widget, row: i32) -> string is
+    return qt_ffi::take(qth_list_item_text(list.handle, row))
+end
+
+;; An out-of-range row is ignored.
+pub fn list_remove_row(list: qt_types::Widget, row: i32) is
+    qth_list_remove_row(list.handle, row)
+end
