@@ -1,0 +1,27 @@
+mod qt_ffi
+mod qt_types
+
+;; false when the app was not created yet (call `qt_app::init()` first).
+pub fn apply(name: string) -> bool is
+    return qth_app_set_theme(name) != 0
+end
+
+pub fn apply_dark() -> bool is
+    return qth_app_set_theme("dark") != 0
+end
+
+pub fn apply_light() -> bool is
+    return qth_app_set_theme("light") != 0
+end
+
+pub fn apply_system() -> bool is
+    return qth_app_set_theme("system") != 0
+end
+
+pub fn dark_stylesheet() -> string is
+    return "QPushButton { border-radius: 6px; padding: 5px 12px; border: 1px solid #4a4a52; } QPushButton:hover { background: #3a3a42; } QPushButton:pressed { background: #4285f4; } QLineEdit, QPlainTextEdit, QSpinBox, QComboBox { border: 1px solid #4a4a52; border-radius: 4px; padding: 3px; } QToolTip { color: #e4e4e8; background: #2d2d32; border: 1px solid #4a4a52; }"
+end
+
+pub fn light_stylesheet() -> string is
+    return "QPushButton { border-radius: 6px; padding: 5px 12px; border: 1px solid #c4c4cc; } QPushButton:hover { background: #e8eefc; } QPushButton:pressed { background: #4285f4; color: white; } QLineEdit, QPlainTextEdit, QSpinBox, QComboBox { border: 1px solid #c4c4cc; border-radius: 4px; padding: 3px; }"
+end
