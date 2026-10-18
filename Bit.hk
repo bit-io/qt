@@ -1,15 +1,41 @@
 [package]
--> name        => qt-hsharp
+-> name        => qt
 -> version     => 0.1.0
--> description => Qt6 Widgets bindings for H# (extern static C shim over Qt6)
+-> description => Qt6 Widgets bindings for H# (C++17 core, extern static [c++])
 -> author      => Bytes Developers
 -> license     => MIT
+-> lang        => h#
+
+[layout]
+-> lib-entry => src/qt.h#
+-> tests     => tests
+-> examples  => examples
+
+[edition]
+-> edition   => 2026
+-> toolchain => 1.1
+
+[lib]
+-> output => hlib
 
 [build]
--> lang    => h#
--> entry   => src/qt.h#
--> output  => build/libqt_hsharp
--> emit    => lib
--> flags   => -Lnative -Inative/include
+-> link            => static
+-> native          => sh native/build.sh Release
+-> native-lib-path => native
+-> native-skip-if  => native/libqthsharp.a
 
-[deps]
+[system-dependencies]
+-> cmake
+--> check => cmake --version
+--> apt => cmake
+--> dnf => cmake
+--> pacman => cmake
+-> qt6-widgets
+--> pkg-config => Qt6Widgets
+--> apt => qt6-base-dev
+--> dnf => qt6-qtbase-devel
+--> pacman => qt6-base
+
+[pack]
+-> contents => [hlib, sources, docs]
+-> files    => [native/libqthsharp.a]
