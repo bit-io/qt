@@ -1,0 +1,79 @@
+mod qt_ffi
+mod qt_types
+
+pub fn new_tree(columns: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_tree_new(columns) }
+end
+
+;; The invisible root: parent of the top-level items.
+pub fn root() -> qt_types::TreeItem is
+    return qt_types::TreeItem { id: 0 }
+end
+
+pub fn tree_set_header(tree: qt_types::Widget, col: i32, text: string) is
+    qth_tree_set_header(tree.handle, col, text)
+end
+
+pub fn tree_set_header_visible(tree: qt_types::Widget, visible: bool) is
+    qth_tree_set_header_visible(tree.handle, if visible then 1 else 0)
+end
+
+;; Adds an item under `parent` (use `root()` for top level). Returns the new
+;; item; its id is 0 when `parent` is not a live item of this tree.
+pub fn tree_add_item(tree: qt_types::Widget, parent: qt_types::TreeItem, text: string) -> qt_types::TreeItem is
+    return qt_types::TreeItem { id: qth_tree_add_item(tree.handle, parent.id, text) }
+end
+
+pub fn tree_set_item_text(tree: qt_types::Widget, item: qt_types::TreeItem, col: i32, text: string) is
+    qth_tree_set_item_text(tree.handle, item.id, col, text)
+end
+
+pub fn tree_get_item_text(tree: qt_types::Widget, item: qt_types::TreeItem, col: i32) -> string is
+    return qt_ffi::take(qth_tree_get_item_text(tree.handle, item.id, col))
+end
+
+pub fn tree_remove_item(tree: qt_types::Widget, item: qt_types::TreeItem) is
+    qth_tree_remove_item(tree.handle, item.id)
+end
+
+pub fn tree_clear(tree: qt_types::Widget) is
+    qth_tree_clear(tree.handle)
+end
+
+;; id 0 when nothing is selected.
+pub fn tree_current_item(tree: qt_types::Widget) -> qt_types::TreeItem is
+    return qt_types::TreeItem { id: qth_tree_current_item(tree.handle) }
+end
+
+pub fn tree_set_current_item(tree: qt_types::Widget, item: qt_types::TreeItem) is
+    qth_tree_set_current_item(tree.handle, item.id)
+end
+
+pub fn tree_item_parent(tree: qt_types::Widget, item: qt_types::TreeItem) -> qt_types::TreeItem is
+    return qt_types::TreeItem { id: qth_tree_item_parent(tree.handle, item.id) }
+end
+
+;; `root()` counts the top-level items.
+pub fn tree_child_count(tree: qt_types::Widget, item: qt_types::TreeItem) -> i32 is
+    return qth_tree_child_count(tree.handle, item.id)
+end
+
+pub fn tree_child_at(tree: qt_types::Widget, item: qt_types::TreeItem, index: i32) -> qt_types::TreeItem is
+    return qt_types::TreeItem { id: qth_tree_child_at(tree.handle, item.id, index) }
+end
+
+pub fn tree_set_expanded(tree: qt_types::Widget, item: qt_types::TreeItem, expanded: bool) is
+    qth_tree_set_expanded(tree.handle, item.id, if expanded then 1 else 0)
+end
+
+pub fn tree_expand_all(tree: qt_types::Widget) is
+    qth_tree_expand_all(tree.handle)
+end
+
+pub fn tree_collapse_all(tree: qt_types::Widget) is
+    qth_tree_collapse_all(tree.handle)
+end
+
+pub fn tree_set_sorting(tree: qt_types::Widget, enabled: bool) is
+    qth_tree_set_sorting(tree.handle, if enabled then 1 else 0)
+end
