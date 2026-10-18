@@ -1,0 +1,75 @@
+mod qt_ffi
+mod qt_types
+
+pub fn new_window(title: string, width: i32, height: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_window_new(title, width, height) }
+end
+
+;; QMainWindow wants a central widget, not a layout: put the content in a
+;; container, give the container a layout, hand the container to the window.
+pub fn window_set_central_widget(window: qt_types::Widget, content: qt_types::Widget) is
+    qth_window_set_central_widget(window.handle, content.handle)
+end
+
+pub fn window_set_title(window: qt_types::Widget, title: string) is
+    qth_window_set_title(window.handle, title)
+end
+
+;; By default a close request only queues `WindowClosed` and the window stays
+;; open — your code decides. With `true` the window closes right after the
+;; event is queued.
+pub fn window_set_auto_close(window: qt_types::Widget, on: bool) is
+    qth_window_set_auto_close(window.handle, if on then 1 else 0)
+end
+
+;; Message in the status bar; `timeout_ms` 0 = until replaced.
+pub fn window_set_status(window: qt_types::Widget, text: string, timeout_ms: i32) is
+    qth_window_set_status(window.handle, text, timeout_ms)
+end
+
+;; ── Menus ────────────────────────────────────────────────────────────────
+
+pub fn window_add_menu(window: qt_types::Widget, title: string) -> qt_types::Menu is
+    return qt_types::Menu { handle: qth_window_add_menu(window.handle, title) }
+end
+
+;; Entry in a menu. `shortcut` like "Ctrl+O" ("" = none). Triggering it
+;; queues `ActionTriggered` with this action's handle.
+pub fn menu_add_action(menu: qt_types::Menu, text: string, shortcut: string) -> qt_types::Action is
+    return qt_types::Action { handle: qth_menu_add_action(menu.handle, text, shortcut) }
+end
+
+pub fn menu_add_separator(menu: qt_types::Menu) is
+    qth_menu_add_separator(menu.handle)
+end
+
+pub fn menu_add_submenu(menu: qt_types::Menu, title: string) -> qt_types::Menu is
+    return qt_types::Menu { handle: qth_menu_add_submenu(menu.handle, title) }
+end
+
+;; Button on the window's toolbar (created on first use).
+pub fn window_add_toolbar_action(window: qt_types::Widget, text: string) -> qt_types::Action is
+    return qt_types::Action { handle: qth_window_add_toolbar_action(window.handle, text) }
+end
+
+;; ── Actions ──────────────────────────────────────────────────────────────
+
+pub fn action_set_enabled(action: qt_types::Action, enabled: bool) is
+    qth_action_set_enabled(action.handle, if enabled then 1 else 0)
+end
+
+pub fn action_set_checkable(action: qt_types::Action, checkable: bool) is
+    qth_action_set_checkable(action.handle, if checkable then 1 else 0)
+end
+
+pub fn action_is_checked(action: qt_types::Action) -> bool is
+    return qth_action_is_checked(action.handle) != 0
+end
+
+pub fn action_set_checked(action: qt_types::Action, checked: bool) is
+    qth_action_set_checked(action.handle, if checked then 1 else 0)
+end
+
+pub fn action_set_text(action: qt_types::Action, text: string) is
+    qth_action_set_text(action.handle, text)
+end
