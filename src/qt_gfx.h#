@@ -1,0 +1,112 @@
+mod qt_ffi
+mod qt_types
+
+pub fn rgb(r: i32, g: i32, b: i32) -> i32 is
+    return ((r & 255) << 16) | ((g & 255) << 8) | (b & 255)
+end
+
+;; ── Images and icons ─────────────────────────────────────────────────────
+
+;; true when the image was loaded.
+pub fn label_set_image(label: qt_types::Widget, path: string) -> bool is
+    return qth_label_set_image(label.handle, path) != 0
+end
+
+;; Stretch the label's image to the label's size.
+pub fn label_set_scaled(label: qt_types::Widget, scaled: bool) is
+    qth_label_set_scaled(label.handle, if scaled then 1 else 0)
+end
+
+pub fn button_set_icon(button: qt_types::Widget, path: string) is
+    qth_button_set_icon(button.handle, path)
+end
+
+pub fn action_set_icon(action: qt_types::Action, path: string) is
+    qth_action_set_icon(action.handle, path)
+end
+
+pub fn window_set_icon(window: qt_types::Widget, path: string) is
+    qth_window_set_icon(window.handle, path)
+end
+
+pub fn app_set_icon(path: string) is
+    qth_app_set_icon(path)
+end
+
+;; Saves a screenshot of any widget as PNG. true on success.
+pub fn grab_png(widget: qt_types::Widget, path: string) -> bool is
+    return qth_widget_grab_png(widget.handle, path) != 0
+end
+
+;; ── Canvas ───────────────────────────────────────────────────────────────
+
+pub fn new_canvas(width: i32, height: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_canvas_new(width, height) }
+end
+
+;; Forgets everything drawn so far (the background stays).
+pub fn canvas_clear(canvas: qt_types::Widget) is
+    qth_canvas_clear(canvas.handle)
+end
+
+pub fn canvas_set_background(canvas: qt_types::Widget, color: i32) is
+    qth_canvas_set_background(canvas.handle, color)
+end
+
+;; Outline colour and width for the shapes / text drawn next.
+pub fn canvas_set_pen(canvas: qt_types::Widget, color: i32, width: f64) is
+    qth_canvas_set_pen(canvas.handle, color, width)
+end
+
+;; Fill colour for the shapes drawn next; `canvas_no_fill` turns it off.
+pub fn canvas_set_fill(canvas: qt_types::Widget, color: i32) is
+    qth_canvas_set_fill(canvas.handle, color)
+end
+
+pub fn canvas_no_fill(canvas: qt_types::Widget) is
+    qth_canvas_set_fill(canvas.handle, 0 - 1)
+end
+
+pub fn canvas_set_font(canvas: qt_types::Widget, family: string, point_size: i32, bold: bool, italic: bool) is
+    qth_canvas_set_font(canvas.handle, family, point_size, if bold then 1 else 0, if italic then 1 else 0)
+end
+
+pub fn canvas_draw_line(canvas: qt_types::Widget, x1: f64, y1: f64, x2: f64, y2: f64) is
+    qth_canvas_draw_line(canvas.handle, x1, y1, x2, y2)
+end
+
+pub fn canvas_draw_rect(canvas: qt_types::Widget, x: f64, y: f64, w: f64, h: f64) is
+    qth_canvas_draw_rect(canvas.handle, x, y, w, h)
+end
+
+pub fn canvas_draw_round_rect(canvas: qt_types::Widget, x: f64, y: f64, w: f64, h: f64) is
+    qth_canvas_draw_round_rect(canvas.handle, x, y, w, h)
+end
+
+;; The ellipse inscribed in the rectangle (a circle when w == h).
+pub fn canvas_draw_ellipse(canvas: qt_types::Widget, x: f64, y: f64, w: f64, h: f64) is
+    qth_canvas_draw_ellipse(canvas.handle, x, y, w, h)
+end
+
+pub fn canvas_draw_point(canvas: qt_types::Widget, x: f64, y: f64) is
+    qth_canvas_draw_point(canvas.handle, x, y)
+end
+
+;; (x, y) is the text baseline's left end.
+pub fn canvas_draw_text(canvas: qt_types::Widget, x: f64, y: f64, text: string) is
+    qth_canvas_draw_text(canvas.handle, x, y, text)
+end
+
+;; w / h <= 0 draws the image at its natural size.
+pub fn canvas_draw_image(canvas: qt_types::Widget, path: string, x: f64, y: f64, w: f64, h: f64) is
+    qth_canvas_draw_image(canvas.handle, path, x, y, w, h)
+end
+
+;; Number of recorded drawing commands (diagnostics).
+pub fn canvas_op_count(canvas: qt_types::Widget) -> i32 is
+    return qth_canvas_op_count(canvas.handle)
+end
+
+pub fn canvas_update(canvas: qt_types::Widget) is
+    qth_canvas_update(canvas.handle)
+end
