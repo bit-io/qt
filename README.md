@@ -1,261 +1,121 @@
-# qt-hsharp
+# qt
 
 Bindingi **Qt6 Widgets** dla języka **[H#](https://github.com/HackerOS-Linux-System/H-Sharp)**,
-publikowane jako pakiet **[bytes](https://github.com/HackerOS-Linux-System/bytes)**.
+budowane przez **[Bit](https://github.com/HackerOS-Linux-System/bit)**.
 
-Biblioteka wystawia idiomatyczne, wysokopoziomowe API H# (`qt::init()`,
-`qt::new_window()`, `qt::new_button()`, `qt::poll_event()`, ...) osadzone
-na niewielkim, statycznie linkowanym shimie C++ (`extern static [c, "qthsharp"]`),
-który sam w sobie używa prawdziwego Qt6.
+Rdzeń jest napisany w **C++17** (klasy, RAII, tablica uchwytów, ograniczona kolejka
+zdarzeń). H# łączy się z nim wyłącznie przez `extern static [c++, "qthsharp"]`
+— biblioteka jest linkowana statycznie, `extern dynamic` nie występuje nigdzie
+(Bit i tak go odrzuca).
 
----
-
-## Dlaczego shim, a nie bezpośrednie `extern [c++]` na klasach Qt?
-
-H# potrafi wołać przez `extern` wyłącznie zwykłe, niemanglowane symbole C
-(`extern "C"`) — nie rozumie layoutu klas C++, vtabli, przeciążeń ani
-manglingu nazw Qt. Dlatego:
-
-1. `native/src/qthsharp.cpp` implementuje mały, płaski **C ABI**
-   (`native/include/qthsharp.h`) — same funkcje `extern "C"`, żadnych
-   klas C++ na granicy.
-2. `src/qt.h#` deklaruje ten sam ABI przez
-   `extern static [c, "qthsharp"]` — zgodnie z konwencją, jaką H#
-   już stosuje dla `malloc`/`free` w swoim README (uchwyt = wskaźnik
-   zrzutowany na `int`).
-3. Wokół surowego `extern` `src/qt.h#` buduje wygodne, bezpieczne API
-   H# (struktury `Widget`/`Layout`, enum `EventKind`, funkcje `pub fn`).
-
-### Sygnały Qt a brak wskaźników funkcyjnych w H#
-
-H# nie ma typu "wskaźnik do funkcji" / domknięcia, który dałoby się
-przekazać przez `extern`. Zamiast tego `qthsharp.cpp` **kolejkuje**
-zdarzenia (kliknięcia, zmiany tekstu, zamknięcie okna, ...) wewnętrznie
-i H# odbiera je zwykłym pollingiem:
-
-```hsharp
-let ev = qt::poll_event()   ;; Event? — nil, jeśli kolejka pusta
-if ev != nil is
-    match ev.kind is
-        qt::EventKind::Clicked => is write("kliknięto!") end
-        _ => is end
-    end
-end
-```
-
-To zwykły, w pełni H#-owy `match` na enumie — żadnego mostkowania
-domknięć przez granicę FFI.
-
----
-
-## Struktura repozytorium
+## Układ
 
 ```
-qt-hsharp/
-├── Bytes.hk                 ← manifest pakietu bytes (biblioteka)
-├── src/
-│   └── qt.h#                ← extern static [c, "qthsharp"] + API wysokiego poziomu
-├── native/
-│   ├── include/qthsharp.h   ← nagłówek C ABI (źródło prawdy dla sygnatur)
-│   ├── src/qthsharp.cpp     ← implementacja C++ nad Qt6 Widgets
-│   ├── CMakeLists.txt       ← buduje statyczne native/libqthsharp.a
-│   └── build.sh             ← ./build.sh — jedna komenda, jeden wynik
-├── examples/
-│   ├── Bytes.hk             ← manifest projektu-przykładu (zależy od qt-hsharp)
-│   ├── hello_window.h#      ← najprostsze okno z etykietą
-│   └── counter_app.h#       ← przycisk + pole tekstowe + pętla poll_event
-└── tests/
-    └── smoke_test.h#        ← test bez GUI: sam FFI (init/quit), pod `bytes test`
+Bit.hk                 manifest (format Bit: [package] [layout] [edition] [lib] [build] ...)
+src/
+  qt.h#                moduł-parasol (mod qt ładuje wszystko)
+  qt_ffi.h#            surowe deklaracje extern static [c++] + take()
+  qt_types.h#          Widget, Layout, Menu, Action, Timer, Event, EventKind
+  qt_app.h#            init / run / quit / shutdown, wersje, schowek
+  qt_widgets.h#        kontener, label, button, checkbox, groupbox, progress, tabs, scroll
+  qt_inputs.h#         lineedit, textedit, radio, slider, spinbox, combobox, lista
+  qt_layout.h#         vbox / hbox / grid / form
+  qt_window.h#         okno, status bar, menu, toolbar, akcje
+  qt_timer.h#          QTimer -> zdarzenie TimerTick
+  qt_dialogs.h#        komunikaty, input, wybór pliku / katalogu
+  qt_events.h#         poll_event()
+  qt_keys.h#           kody klawiszy i modyfikatory
+  qt_gfx.h#            obrazy, ikony, Canvas (rysowanie)
+  qt_input.h#          klawiatura / mysz / kółko / resize, skróty
+  qt_table.h#          QTableWidget
+  qt_tree.h#           QTreeWidget
+  qt_extras.h#         data / czas / kalendarz, splitter, stos stron, dock
+  qt_tray.h#           tray, powiadomienia, menu samodzielne
+  qt_theme.h#          motywy dark / light / system
+native/
+  include/qthsharp.h   publiczne C ABI
+  src/core/            HandleTable, EventQueue, AppHost, HWindow, InputFilter,
+                       Canvas (Q_OBJECT + paintEvent), TreeItems (czyste C++)
+  src/api/             punkty wejścia extern "C" pogrupowane tematycznie
+  tests/native_smoke.cpp   test headless (QT_QPA_PLATFORM=offscreen)
+  CMakeLists.txt, build.sh
+examples/  (hello_window, counter_app, widgets_demo, paint_demo, data_demo)
+tests/
 ```
 
----
+## Dlaczego eksporty są `extern "C"`
 
-## Wymagania
-
-- **H#** ≥ 0.9 (kompilator `h#` + `bytes`) — LLVM 21 backend
-- **Qt6** (moduł Widgets) + nagłówki deweloperskie
-- **CMake** ≥ 3.16, kompilator C++17, **pkg-config**
-
-Instalacja zależności systemowych:
-
-```bash
-# Debian / Ubuntu
-sudo apt install qt6-base-dev cmake build-essential pkg-config
-
-# Fedora
-sudo dnf install qt6-qtbase-devel cmake gcc-c++ pkgconf-pkg-config
-
-# Arch Linux
-sudo pacman -S qt6-base cmake pkgconf base-devel
-```
-
----
+Kompilator H# wiąże `extern` po zwykłej nazwie symbolu i nie ma managlera nazw
+C++ dla wolnych funkcji. Dlatego cienka warstwa wejściowa jest `extern "C"`,
+a cała logika to klasy C++ w `native/src/core`.
 
 ## Budowanie
 
-### 1. Zbuduj natywny shim (`libqthsharp.a`)
+Wymagane: Qt6 (Widgets), CMake, kompilator C++17.
+`bit build` sam uruchamia `sh native/build.sh` (patrz `[build] native` w Bit.hk).
+Ręcznie: `sh native/build.sh` (buduje `native/libqthsharp.a` i uruchamia test natywny).
 
-```bash
-cd native
-./build.sh          # Release (domyślnie); ./build.sh Debug dla wersji debug
-```
-
-Skrypt uruchamia CMake + Qt6 i zostawia gotowe `native/libqthsharp.a`
-(oraz nagłówek `native/include/qthsharp.h`) dokładnie tam, gdzie
-oczekuje go blok `extern static [c, "qthsharp"]` w `src/qt.h#`.
-
-### 2. Zbuduj samą bibliotekę H# (opcjonalnie, do sprawdzenia typów)
-
-```bash
-bytes build          # z katalogu głównego repo — czyta Bytes.hk
-# albo bezpośrednio:
-h# check src/qt.h#
-```
-
-### 3. Uruchom przykład
-
-```bash
-cd examples
-bytes run                       # domyślnie hello_window.h# (patrz Bytes.hk -> entry)
-```
-
-lub bez `bytes`, bezpośrednio kompilatorem H#:
-
-```bash
-h# compile examples/hello_window.h# \
-    -I . \
-    --flags "-Lnative -lqthsharp" \
-    -o hello_window
-./hello_window
-```
-
-> **Uwaga:** `native/libqthsharp.a` to archiwum statyczne — nie niesie
-> ze sobą własnych zależności Qt (`.so`) tak, jak robi to biblioteka
-> dynamiczna. Dlatego `src/qt.h#` dokłada pusty blok
-> `extern dynamic [c++, "Qt6Widgets"]`, którego jedynym zadaniem jest
-> wstrzyknięcie flag linkera przez `pkg-config --libs Qt6Widgets`
-> (co samo w sobie ciągnie `Qt6Core`/`Qt6Gui` przez zależności w
-> plikach `.pc`) oraz automatyczne `-lstdc++` dla bloków `[c++]`. Dzięki
-> temu wystarczy jedno `mod qt` w kodzie H# — nie trzeba ręcznie
-> doklejać flag Qt przy każdej kompilacji.
-
----
-
-## Szybki start
+## Użycie
 
 ```hsharp
 mod qt
 
 fn main() is
-    qt::init()
-
-    let window:    qt::Widget = qt::new_window("Moja aplikacja", 400, 300)
-    let container: qt::Widget = qt::new_container()
-    let label:     qt::Widget = qt::new_label("Cześć, Qt6!")
-
-    let layout: qt::Layout = qt::new_vbox()
-    qt::layout_add_widget(layout, label)
-    qt::widget_set_layout(container, layout)
-
-    qt::window_set_central_widget(window, container)
-    qt::show(window)
-    qt::run()          ;; blokująca pętla zdarzeń Qt
+    qt_app::init()
+    let w: qt_types::Widget = qt_window::new_window("Hej", 300, 120)
+    qt_widgets::show(w)
+    ;; ... pętla: qt_app::process_events() + qt_events::poll_event()
 end
 ```
 
-Zobacz `examples/counter_app.h#` po przykład z własną pętlą
-(`poll_event()`), przyciskiem i polem tekstowym.
+Zdarzenia sprawdzaj przez `if ev.kind == qt_types::EventKind::Clicked is ... end`
+(parser H# nie przyjmuje w `match` wzorca `modul::Typ::Wariant`).
 
----
+## Nowe w 0.3
 
-## API — przegląd
+- **Tabele i drzewa:** `qt_table` (komórki, nagłówki, sortowanie, edycja, kolory komórek)
+  i `qt_tree` (elementy jako id, podrzewa, rozwijanie). Zapis komórek z kodu jest „cichy” —
+  nie zalewa kolejki zdarzeń.
+- **Rysowanie i obrazy:** `qt_gfx` — obrazy w `QLabel`, ikony przycisków/akcji/okna
+  (`theme:NAZWA` = ikona z motywu pulpitu), `Canvas` z liniami, prostokątami, elipsami,
+  tekstem i obrazami, zrzut widgetu do PNG (`grab_png`).
+- **Zdarzenia wejściowe:** `qt_input::watch(widget, WATCH_ALL)` → `KeyPressed`, `MousePressed`,
+  `MouseMoved`, `Wheel`, `Resized`; skróty `new_shortcut(widget, "Ctrl+S")`.
+  `Event` ma teraz `pos_x`, `pos_y`, `mods`. Kody klawiszy w `qt_keys`.
+- **Widgety i dialogi:** data / czas / kalendarz, splitter, stos stron, dock, wybór koloru
+  i czcionki, okno postępu, tray z powiadomieniami, menu samodzielne (`qt_tray`).
+- **Wygoda:** `qt_layout::row([a, b, c])`, `column`, `grid_of`, `form_of`, `labeled`,
+  `panel_column([...])`; motywy `qt_theme::apply_dark()` / `apply_light()` / `apply_system()`
+  (paleta Fusion dla całej aplikacji) oraz gotowe style sheety.
+- **Fasada `qt::`:** stare API 0.1 (`qt::new_button`, `qt::Widget` …) działa dalej jako cienkie
+  wrappery na końcu `qt.h#`. Aliasy typów (`pub type Widget = qt_types::Widget`) przechodzą
+  parser H#, ale nie sprawdzałem ich kompilatorem — jeśli `h#` ich nie rozwiąże, używaj `qt_types::Widget`.
 
-### Aplikacja
-| Funkcja | Opis |
-|---|---|
-| `qt::init()` | Tworzy `QApplication` (jednorazowo, wywołaj na początku `main()`) |
-| `qt::run() -> int` | Blokująca pętla zdarzeń Qt (`exec()`), zwraca kod wyjścia |
-| `qt::quit()` | Kończy pętlę `run()` |
-| `qt::process_events()` | Przetwarza oczekujące zdarzenia bez blokowania (dla własnej pętli) |
-| `qt::is_running() -> bool` | Czy nikt nie wywołał jeszcze `quit()` |
-| `qt::set_style(name: string)` | np. `"Fusion"` |
-| `qt::set_app_name(name: string)` | Nazwa aplikacji |
+Uwagi: `Resized` Qt wysyła tylko widgetom już pokazanym. `match` z wzorcem
+`modul::Typ::Wariant` nie przechodzi parsera H# — porównuj `ev.kind == qt_types::EventKind::X`.
+Stałe z modułów (`qt_keys::KEY_ESCAPE`, `qt_input::WATCH_ALL`) przeszły parser, ale nie były
+kompilowane.
 
-### Tworzenie widgetów (zwracają `Widget`)
-`qt::new_window(title, w, h)`, `qt::new_container()`, `qt::new_button(text)`,
-`qt::new_label(text)`, `qt::new_lineedit(placeholder)`, `qt::new_checkbox(text)`,
-`qt::new_slider(min, max, initial)`
+## Zmiany względem 0.1
 
-### Layouty (zwracają `Layout`)
-`qt::new_vbox()`, `qt::new_hbox()`, `qt::layout_add_widget(l, w)`,
-`qt::layout_add_spacing(l, px)`, `qt::layout_add_stretch(l, stretch)`,
-`qt::layout_set_margins(l, l, t, r, b)`, `qt::widget_set_layout(widget, layout)`
+- Jeden `qt::` rozbity na moduły (`qt_widgets::new_button` itd.); stare nazwy `qt::...` działają przez fasadę.
+- `extern dynamic` → `extern static [c++]`.
+- Uchwyty to bezpieczne id (nie wskaźniki); użycie uchwytu po zniszczeniu widgetu jest no-opem.
+- Stringi zwracane z C++ są kopiowane i zwalniane (`qt_ffi::take`), brak wycieków.
+- `EventKind::Timer` nie istnieje; zdarzenie timera to `TimerTick`.
+- Dodane widgety i funkcje: textedit, radio, spinbox, double spinbox, combobox, lista, progress,
+  groupbox, zakładki, scroll, separator, grid/form, menu, toolbar, status bar, timer, schowek,
+  dialogi input/plików, `init_offscreen()`, `shutdown()`.
+- Poprawki: `destroy()` naprawdę zwalnia obiekty w pętli z `process_events()`;
+  `QApplication` nie jest niszczony w statycznym destruktorze (crash).
 
-### Operacje ogólne na widgetach
-`qt::show`, `qt::hide`, `qt::close`, `qt::resize`, `qt::move_to`,
-`qt::set_enabled`, `qt::set_visible`, `qt::set_style_sheet` (CSS Qt),
-`qt::set_fixed_size`, `qt::destroy`
+## Status testów
 
-### Specyficzne dla typu widgetu
-- **Label:** `qt::label_set_text`, `qt::label_get_text`
-- **Button:** `qt::button_set_text`
-- **LineEdit:** `qt::lineedit_get_text`, `qt::lineedit_set_text`,
-  `qt::lineedit_set_placeholder`, `qt::lineedit_set_read_only`,
-  `qt::lineedit_set_password_mode`
-- **CheckBox:** `qt::checkbox_is_checked`, `qt::checkbox_set_checked`
-- **Slider:** `qt::slider_get_value`, `qt::slider_set_value`
-- **Okno:** `qt::window_set_central_widget`, `qt::window_set_title`
-
-### Dialogi (blokujące, natywne okna Qt)
-`qt::show_info`, `qt::show_warning`, `qt::show_error`,
-`qt::show_question(...) -> bool`
-
-### Zdarzenia
-```hsharp
-struct Event is
-    pub kind:   EventKind
-    pub widget: Widget
-end
-
-enum EventKind is
-    Clicked
-    TextChanged
-    ReturnPressed
-    Toggled
-    WindowClosed
-    ValueChanged
-    Unknown
-end
-
-pub fn poll_event() -> Event?
-```
-
-`ev.widget.handle` jest tym samym `int`, który dostałeś z odpowiedniego
-`qt::new_*` — porównuj uchwyty, żeby rozróżnić, który widget wysłał
-zdarzenie, gdy masz ich wiele.
-
----
-
-## Znane ograniczenia
-
-- **Brak callbacków przez FFI.** Jak opisano wyżej — zdarzenia idą przez
-  kolejkę i `poll_event()`, nie przez bezpośrednie sygnały/sloty H#.
-- **Uchwyty to surowe wskaźniki jako `int`.** Biblioteka nie liczy
-  referencji ani nie waliduje uchwytów — nie wywołuj funkcji na uchwycie
-  po `qt::destroy()` tego widgetu (dokładnie tak samo jak surowy
-  `free()`/`malloc()` w przykładzie FFI z README H#).
-- **Statyczne linkowanie Qt6 samego w sobie nie jest wspierane** przez
-  dystrybucje Qt (Qt Widgets zwykle dystrybuowane jest jako `.so`).
-  `native/libqthsharp.a` jest statyczny (zgodnie z życzeniem — `extern
-  static`), ale sam Qt6 pod spodem i tak ładowany jest dynamicznie
-  (`libQt6Widgets.so` itd.) — to normalna, wspierana konfiguracja.
-- Struktury przekazywane przez wartość przez `extern` w H# mają
-  ograniczenia (patrz komentarze w kompilatorze H# / `ffi.rs`) — dlatego
-  ta biblioteka nie przekazuje żadnych structów H# do C, tylko proste
-  typy (`int`, `i32`, `i8`, `string`).
-
----
+Warstwa C++ jest skompilowana i przetestowana na Qt 6.4.2 (offscreen, także ASan/UBSan), w tym
+rysowanie (sprawdzane na pikselach zrzutu), zdarzenia wejściowe, tabele, drzewa i uchwyty po usunięciu.
+Niesprawdzone w tym teście: dialogi blokujące (kolor, czcionka, plik) i faktyczny tray.
+Pliki H# przechodzą parser H#; nie były kompilowane kompilatorem `h#`.
 
 ## Licencja
 
-MIT — zobacz [`LICENSE`](./LICENSE).
+MIT
