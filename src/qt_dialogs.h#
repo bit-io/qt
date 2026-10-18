@@ -1,0 +1,93 @@
+mod qt_ffi
+mod qt_types
+
+pub fn show_info(parent: qt_types::Widget, title: string, text: string) is
+    qth_show_info(parent.handle, title, text)
+end
+
+pub fn show_warning(parent: qt_types::Widget, title: string, text: string) is
+    qth_show_warning(parent.handle, title, text)
+end
+
+pub fn show_error(parent: qt_types::Widget, title: string, text: string) is
+    qth_show_error(parent.handle, title, text)
+end
+
+;; true = Yes.
+pub fn show_question(parent: qt_types::Widget, title: string, text: string) -> bool is
+    return qth_show_question(parent.handle, title, text) != 0
+end
+
+;; Asks for one line of text. Check `input_accepted()` right after: "" can
+;; be both "cancelled" and "OK with nothing typed".
+pub fn input_text(parent: qt_types::Widget, title: string, label: string, initial: string) -> string is
+    return qt_ffi::take(qth_input_text(parent.handle, title, label, initial))
+end
+
+;; Asks for an integer in [min, max]; on cancel returns `value` unchanged.
+pub fn input_int(parent: qt_types::Widget, title: string, label: string, value: i32, min: i32, max: i32) -> i32 is
+    return qth_input_int(parent.handle, title, label, value, min, max)
+end
+
+;; Did the last `input_text` / `input_int` end with OK?
+pub fn input_accepted() -> bool is
+    return qth_input_accepted() != 0
+end
+
+;; File choosers return the chosen path, or "" when cancelled.
+;; `filter` example: "Text (*.txt);;All files (*)".
+pub fn file_open(parent: qt_types::Widget, title: string, dir: string, filter: string) -> string is
+    return qt_ffi::take(qth_file_open(parent.handle, title, dir, filter))
+end
+
+pub fn file_save(parent: qt_types::Widget, title: string, dir: string, filter: string) -> string is
+    return qt_ffi::take(qth_file_save(parent.handle, title, dir, filter))
+end
+
+pub fn dir_select(parent: qt_types::Widget, title: string, dir: string) -> string is
+    return qt_ffi::take(qth_dir_select(parent.handle, title, dir))
+end
+
+;; ── Colour, font, progress ───────────────────────────────────────────────
+
+;; Colour chooser. Returns 0xRRGGBB, or -1 when cancelled.
+pub fn pick_color(parent: qt_types::Widget, title: string, initial: i32) -> i32 is
+    return qth_color_pick(parent.handle, title, initial)
+end
+
+;; Font chooser. Returns the family ("" when cancelled); size and style of the
+;; choice are read right after with `font_size()`, `font_bold()`, `font_italic()`.
+pub fn pick_font(parent: qt_types::Widget, title: string, family: string, size: i32) -> string is
+    return qt_ffi::take(qth_font_pick(parent.handle, title, family, size))
+end
+
+pub fn font_size() -> i32 is
+    return qth_font_last_size()
+end
+
+pub fn font_bold() -> bool is
+    return qth_font_last_bold() != 0
+end
+
+pub fn font_italic() -> bool is
+    return qth_font_last_italic() != 0
+end
+
+;; Non-blocking progress window with a Cancel button. Drive it from your own
+;; loop (`progress_dialog_set_value`, then `qt_app::process_events()`), poll
+;; `progress_dialog_was_canceled`, and `qt_widgets::destroy` it when done.
+pub fn new_progress_dialog(parent: qt_types::Widget, title: string, label: string, min: i32, max: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_progress_dialog_new(parent.handle, title, label, min, max) }
+end
+
+pub fn progress_dialog_set_value(dialog: qt_types::Widget, value: i32) is
+    qth_progress_dialog_set_value(dialog.handle, value)
+end
+
+pub fn progress_dialog_set_label(dialog: qt_types::Widget, text: string) is
+    qth_progress_dialog_set_label(dialog.handle, text)
+end
+
+pub fn progress_dialog_was_canceled(dialog: qt_types::Widget) -> bool is
+    return qth_progress_dialog_was_canceled(dialog.handle) != 0
+end
