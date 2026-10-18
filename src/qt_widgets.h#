@@ -1,0 +1,241 @@
+mod qt_ffi
+mod qt_types
+
+;; ── Creation ─────────────────────────────────────────────────────────────
+
+;; A plain QWidget — the usual content area of a window or tab page.
+pub fn new_container() -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_widget_new() }
+end
+
+pub fn new_button(text: string) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_button_new(text) }
+end
+
+pub fn new_label(text: string) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_label_new(text) }
+end
+
+pub fn new_checkbox(text: string) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_checkbox_new(text) }
+end
+
+pub fn new_progress(min: i32, max: i32, initial: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_progress_new(min, max, initial) }
+end
+
+;; A titled frame. Give it a layout with `qt_layout::widget_set_layout`.
+pub fn new_groupbox(title: string) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_groupbox_new(title) }
+end
+
+pub fn new_tabs() -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_tabs_new() }
+end
+
+pub fn new_scroll_area() -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_scroll_new() }
+end
+
+;; A thin line; `vertical` picks the orientation.
+pub fn new_separator(vertical: bool) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_separator_new(if vertical then 1 else 0) }
+end
+
+;; ── Generic operations ───────────────────────────────────────────────────
+
+pub fn show(widget: qt_types::Widget) is
+    qth_widget_show(widget.handle)
+end
+
+pub fn hide(widget: qt_types::Widget) is
+    qth_widget_hide(widget.handle)
+end
+
+pub fn close(widget: qt_types::Widget) is
+    qth_widget_close(widget.handle)
+end
+
+pub fn resize(widget: qt_types::Widget, w: i32, h: i32) is
+    qth_widget_resize(widget.handle, w, h)
+end
+
+pub fn move_to(widget: qt_types::Widget, x: i32, y: i32) is
+    qth_widget_move(widget.handle, x, y)
+end
+
+pub fn set_enabled(widget: qt_types::Widget, enabled: bool) is
+    qth_widget_set_enabled(widget.handle, if enabled then 1 else 0)
+end
+
+pub fn set_visible(widget: qt_types::Widget, visible: bool) is
+    qth_widget_set_visible(widget.handle, if visible then 1 else 0)
+end
+
+;; Qt style sheet (CSS dialect) for this widget and its children.
+pub fn set_style_sheet(widget: qt_types::Widget, css: string) is
+    qth_widget_set_style_sheet(widget.handle, css)
+end
+
+pub fn set_fixed_size(widget: qt_types::Widget, w: i32, h: i32) is
+    qth_widget_set_fixed_size(widget.handle, w, h)
+end
+
+pub fn set_minimum_size(widget: qt_types::Widget, w: i32, h: i32) is
+    qth_widget_set_minimum_size(widget.handle, w, h)
+end
+
+pub fn set_maximum_size(widget: qt_types::Widget, w: i32, h: i32) is
+    qth_widget_set_maximum_size(widget.handle, w, h)
+end
+
+pub fn set_tooltip(widget: qt_types::Widget, text: string) is
+    qth_widget_set_tooltip(widget.handle, text)
+end
+
+;; Name used by style-sheet selectors (`#name { ... }`).
+pub fn set_object_name(widget: qt_types::Widget, name: string) is
+    qth_widget_set_object_name(widget.handle, name)
+end
+
+;; family "" keeps the current family; point_size 0 keeps the current size.
+pub fn set_font(widget: qt_types::Widget, family: string, point_size: i32, bold: bool, italic: bool) is
+    qth_widget_set_font(widget.handle, family, point_size, if bold then 1 else 0, if italic then 1 else 0)
+end
+
+pub fn set_focus(widget: qt_types::Widget) is
+    qth_widget_set_focus(widget.handle)
+end
+
+pub fn is_visible(widget: qt_types::Widget) -> bool is
+    return qth_widget_is_visible(widget.handle) != 0
+end
+
+pub fn is_enabled(widget: qt_types::Widget) -> bool is
+    return qth_widget_is_enabled(widget.handle) != 0
+end
+
+pub fn width(widget: qt_types::Widget) -> i32 is
+    return qth_widget_width(widget.handle)
+end
+
+pub fn height(widget: qt_types::Widget) -> i32 is
+    return qth_widget_height(widget.handle)
+end
+
+;; Schedules the widget (and its children) for deletion. It is really freed
+;; the next time `qt_app::process_events()` / `run()` spins. Afterwards the
+;; handle is dead; using it is a harmless no-op.
+pub fn destroy(widget: qt_types::Widget) is
+    qth_widget_destroy(widget.handle)
+end
+
+;; ── Label ────────────────────────────────────────────────────────────────
+
+pub fn label_set_text(label: qt_types::Widget, text: string) is
+    qth_label_set_text(label.handle, text)
+end
+
+pub fn label_get_text(label: qt_types::Widget) -> string is
+    return qt_ffi::take(qth_label_get_text(label.handle))
+end
+
+pub fn label_set_word_wrap(label: qt_types::Widget, wrap: bool) is
+    qth_label_set_word_wrap(label.handle, if wrap then 1 else 0)
+end
+
+;; 0 = left, 1 = center, 2 = right.
+pub fn label_set_alignment(label: qt_types::Widget, alignment: i32) is
+    qth_label_set_alignment(label.handle, alignment)
+end
+
+;; ── Button ───────────────────────────────────────────────────────────────
+
+pub fn button_set_text(button: qt_types::Widget, text: string) is
+    qth_button_set_text(button.handle, text)
+end
+
+pub fn button_get_text(button: qt_types::Widget) -> string is
+    return qt_ffi::take(qth_button_get_text(button.handle))
+end
+
+;; ── Check box ────────────────────────────────────────────────────────────
+
+pub fn checkbox_is_checked(checkbox: qt_types::Widget) -> bool is
+    return qth_checkbox_is_checked(checkbox.handle) != 0
+end
+
+pub fn checkbox_set_checked(checkbox: qt_types::Widget, checked: bool) is
+    qth_checkbox_set_checked(checkbox.handle, if checked then 1 else 0)
+end
+
+pub fn checkbox_set_text(checkbox: qt_types::Widget, text: string) is
+    qth_checkbox_set_text(checkbox.handle, text)
+end
+
+;; ── Group box ────────────────────────────────────────────────────────────
+
+pub fn groupbox_set_title(box: qt_types::Widget, title: string) is
+    qth_groupbox_set_title(box.handle, title)
+end
+
+;; A checkable group box disables its children while unchecked and emits
+;; `Toggled`.
+pub fn groupbox_set_checkable(box: qt_types::Widget, checkable: bool) is
+    qth_groupbox_set_checkable(box.handle, if checkable then 1 else 0)
+end
+
+pub fn groupbox_is_checked(box: qt_types::Widget) -> bool is
+    return qth_groupbox_is_checked(box.handle) != 0
+end
+
+pub fn groupbox_set_checked(box: qt_types::Widget, checked: bool) is
+    qth_groupbox_set_checked(box.handle, if checked then 1 else 0)
+end
+
+;; ── Progress bar ─────────────────────────────────────────────────────────
+
+pub fn progress_set_value(bar: qt_types::Widget, value: i32) is
+    qth_progress_set_value(bar.handle, value)
+end
+
+pub fn progress_get_value(bar: qt_types::Widget) -> i32 is
+    return qth_progress_get_value(bar.handle)
+end
+
+pub fn progress_set_range(bar: qt_types::Widget, min: i32, max: i32) is
+    qth_progress_set_range(bar.handle, min, max)
+end
+
+pub fn progress_set_text_visible(bar: qt_types::Widget, visible: bool) is
+    qth_progress_set_text_visible(bar.handle, if visible then 1 else 0)
+end
+
+;; ── Tabs ─────────────────────────────────────────────────────────────────
+
+;; Adds `page` as a tab and returns its index (-1 on a bad handle).
+pub fn tabs_add_tab(tabs: qt_types::Widget, page: qt_types::Widget, title: string) -> i32 is
+    return qth_tabs_add_tab(tabs.handle, page.handle, title)
+end
+
+pub fn tabs_get_index(tabs: qt_types::Widget) -> i32 is
+    return qth_tabs_get_index(tabs.handle)
+end
+
+pub fn tabs_set_index(tabs: qt_types::Widget, index: i32) is
+    qth_tabs_set_index(tabs.handle, index)
+end
+
+pub fn tabs_count(tabs: qt_types::Widget) -> i32 is
+    return qth_tabs_count(tabs.handle)
+end
+
+;; ── Scroll area ──────────────────────────────────────────────────────────
+
+pub fn scroll_set_widget(scroll: qt_types::Widget, content: qt_types::Widget) is
+    qth_scroll_set_widget(scroll.handle, content.handle)
+end
+
+pub fn scroll_set_widget_resizable(scroll: qt_types::Widget, resizable: bool) is
+    qth_scroll_set_widget_resizable(scroll.handle, if resizable then 1 else 0)
+end
