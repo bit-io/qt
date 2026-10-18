@@ -1,0 +1,61 @@
+use "bit -> qt"
+
+fn main() is
+    qt_app::init()
+    qt_theme::apply_dark()
+
+    let window: qt_types::Widget = qt_window::new_window("Canvas", 480, 360)
+    let canvas: qt_types::Widget = qt_gfx::new_canvas(480, 320)
+    qt_gfx::canvas_set_background(canvas, qt_gfx::rgb(24, 24, 28))
+    qt_input::watch(canvas, qt_input::WATCH_ALL)
+    qt_gfx::canvas_set_pen(canvas, qt_gfx::rgb(255, 255, 255), 1.5)
+    qt_gfx::canvas_draw_text(canvas, 12.0, 24.0, "Kliknij, aby narysować koło")
+
+    qt_window::window_set_central_widget(window, canvas)
+    qt_window::window_set_status(window, "Gotowe", 0)
+    qt_widgets::show(window)
+
+    let mut radius: i32 = 20
+    let mut color:  i32 = qt_gfx::rgb(66, 133, 244)
+    let mut keep_going: bool = true
+
+    while keep_going is
+        qt_app::process_events()
+        let ev = qt_events::poll_event()
+        if ev != nil is
+            if ev.kind == qt_types::EventKind::MousePressed is
+                if ev.value == 1 is
+                    qt_gfx::canvas_set_fill(canvas, color)
+                    let r: f64 = (radius + 0.0)
+                    qt_gfx::canvas_draw_ellipse(canvas, (ev.pos_x + 0.0) - r, (ev.pos_y + 0.0) - r, r * 2.0, r * 2.0)
+                end
+                if ev.value == 2 is
+                    let picked: i32 = qt_dialogs::pick_color(window, "Kolor kółek", color)
+                    if picked >= 0 is
+                        color = picked
+                    end
+                end
+            end
+            if ev.kind == qt_types::EventKind::Wheel is
+                radius = radius + (ev.value / 60)
+                if radius < 4 is
+                    radius = 4
+                end
+                qt_window::window_set_status(window, "Promień: " + to_string(radius), 1500)
+            end
+            if ev.kind == qt_types::EventKind::KeyPressed is
+                if ev.value == 67 is
+                    qt_gfx::canvas_clear(canvas)
+                end
+                if ev.value == qt_keys::KEY_ESCAPE is
+                    keep_going = false
+                end
+            end
+            if ev.kind == qt_types::EventKind::WindowClosed is
+                keep_going = false
+            end
+        end
+        keep_going = keep_going && qt_app::is_running()
+    end
+    qt_app::shutdown()
+end
