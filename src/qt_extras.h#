@@ -1,0 +1,128 @@
+mod qt_ffi
+mod qt_types
+
+;; ── Date, time, calendar ─────────────────────────────────────────────────
+;; Dates travel as one int `yyyymmdd` (20261016) or as ISO text "2026-10-16".
+;; An invalid date (e.g. 31 February) falls back to today. Changes by the user
+;; or from code queue `DateChanged` (ev.value = yyyymmdd, ev.text = ISO) or
+;; `TimeChanged` (ev.value = seconds since midnight, ev.text = "HH:mm:ss").
+
+pub fn new_dateedit(year: i32, month: i32, day: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_dateedit_new(year, month, day) }
+end
+
+pub fn dateedit_set_date(edit: qt_types::Widget, year: i32, month: i32, day: i32) is
+    qth_dateedit_set_date(edit.handle, year, month, day)
+end
+
+pub fn dateedit_get_ymd(edit: qt_types::Widget) -> i32 is
+    return qth_dateedit_get_ymd(edit.handle)
+end
+
+pub fn dateedit_get_text(edit: qt_types::Widget) -> string is
+    return qt_ffi::take(qth_dateedit_get_text(edit.handle))
+end
+
+;; Drop-down calendar instead of plain spin arrows.
+pub fn dateedit_set_popup(edit: qt_types::Widget, popup: bool) is
+    qth_dateedit_set_popup(edit.handle, if popup then 1 else 0)
+end
+
+pub fn new_timeedit(hour: i32, minute: i32, second: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_timeedit_new(hour, minute, second) }
+end
+
+pub fn timeedit_set_time(edit: qt_types::Widget, hour: i32, minute: i32, second: i32) is
+    qth_timeedit_set_time(edit.handle, hour, minute, second)
+end
+
+pub fn timeedit_get_seconds(edit: qt_types::Widget) -> i32 is
+    return qth_timeedit_get_seconds(edit.handle)
+end
+
+pub fn timeedit_get_text(edit: qt_types::Widget) -> string is
+    return qt_ffi::take(qth_timeedit_get_text(edit.handle))
+end
+
+pub fn new_calendar() -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_calendar_new() }
+end
+
+pub fn calendar_set_date(cal: qt_types::Widget, year: i32, month: i32, day: i32) is
+    qth_calendar_set_date(cal.handle, year, month, day)
+end
+
+pub fn calendar_get_ymd(cal: qt_types::Widget) -> i32 is
+    return qth_calendar_get_ymd(cal.handle)
+end
+
+pub fn calendar_get_text(cal: qt_types::Widget) -> string is
+    return qt_ffi::take(qth_calendar_get_text(cal.handle))
+end
+
+;; Today as yyyymmdd.
+pub fn today_ymd() -> i32 is
+    return qth_date_today_ymd()
+end
+
+;; ── Splitter ─────────────────────────────────────────────────────────────
+
+;; `vertical` true stacks the panes top to bottom.
+pub fn new_splitter(vertical: bool) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_splitter_new(if vertical then 1 else 0) }
+end
+
+pub fn splitter_add_widget(splitter: qt_types::Widget, pane: qt_types::Widget) is
+    qth_splitter_add_widget(splitter.handle, pane.handle)
+end
+
+;; Initial pane sizes in pixels (two or three panes).
+pub fn splitter_set_sizes2(splitter: qt_types::Widget, a: i32, b: i32) is
+    qth_splitter_set_sizes2(splitter.handle, a, b)
+end
+
+pub fn splitter_set_sizes3(splitter: qt_types::Widget, a: i32, b: i32, c: i32) is
+    qth_splitter_set_sizes3(splitter.handle, a, b, c)
+end
+
+;; Which pane takes the extra space when the window grows.
+pub fn splitter_set_stretch(splitter: qt_types::Widget, index: i32, stretch: i32) is
+    qth_splitter_set_stretch(splitter.handle, index, stretch)
+end
+
+;; ── Stacked widget (one visible page at a time) ──────────────────────────
+;; Switching pages queues `IndexChanged`.
+
+pub fn new_stack() -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_stack_new() }
+end
+
+;; Returns the page index.
+pub fn stack_add_page(stack: qt_types::Widget, page: qt_types::Widget) -> i32 is
+    return qth_stack_add_page(stack.handle, page.handle)
+end
+
+pub fn stack_set_index(stack: qt_types::Widget, index: i32) is
+    qth_stack_set_index(stack.handle, index)
+end
+
+pub fn stack_get_index(stack: qt_types::Widget) -> i32 is
+    return qth_stack_get_index(stack.handle)
+end
+
+pub fn stack_count(stack: qt_types::Widget) -> i32 is
+    return qth_stack_count(stack.handle)
+end
+
+;; ── Dock ─────────────────────────────────────────────────────────────────
+
+pub const DOCK_LEFT:   i32 = 0
+pub const DOCK_RIGHT:  i32 = 1
+pub const DOCK_TOP:    i32 = 2
+pub const DOCK_BOTTOM: i32 = 3
+
+;; A detachable panel around the main window's centre. The returned widget is
+;; the dock itself: `qt_widgets::hide` / `show` / `set_visible` toggle it.
+pub fn window_add_dock(window: qt_types::Widget, title: string, content: qt_types::Widget, area: i32) -> qt_types::Widget is
+    return qt_types::Widget { handle: qth_window_add_dock(window.handle, title, content.handle, area) }
+end
